@@ -178,8 +178,79 @@ def logout():
 # Core Recipe Generation
 # ==========================================
 @app.route('/api/generate', methods=['POST'])
+@limiter.limit("1 per 3 minute") # [Limit] Max 1x generate resep per 3 menit
 def generate_recipe():
-    return "WIP: Generate Recipe Endpoint"
+    # Check if User is Logged In
+    if 'user_id' not in session:
+        return jsonify({
+            'error_code': 9,
+            'success': False,
+            'message': 'Unauthorized. Please login first.'
+        }), 401
+
+    # Get JSON Data from Request
+    data = request.get_json()
+    if not data:
+        return jsonify({
+            'error_code': 10,
+            'success': False,
+            'message': 'Invalid JSON data.'
+        }), 400
+
+    # Bahan Input
+    bahan = data.get("bahan")
+    mode = data.get("mode", "normal")  # default mode is 'normal'
+
+    # Validate Bahan
+    if not bahan:
+        return jsonify({
+            'error_code': 11,
+            'success': False,
+            'message': 'Bahan is required to generate recipe.'
+        }), 400
+
+    # Execute Recipe Generation
+    try:
+        # Call AI Utility to Generate Recipe
+        resep_text = utils.generate_resep_final(bahan, mode)
+
+        # Check if AI returned an error message
+        if "Maaf" in resep_text and "kendala" in resep_text:
+            return jsonify({
+                'error_code': 12,
+                'success': False,
+                'message': 'AI failed to generate recipe. Try different ingredients.'
+            }), 500
+
+    except Exception as e:
+        print(f"[AI ERROR] {e}")
+        return jsonify({
+            'error_code': 13,
+            'success': False,
+            'message': f'Server Error during generation: {str(e)}'
+        }), 500
+
+    # 5. SAVE TO DATABASE (History)
+    try:
+        user_id = session['user_id']
+        history_id = db_utils.save_recipe_to_history(user_id, bahan, resep_text)
+
+        return jsonify({
+            'error_code': 0,
+            'success': True,
+            'message': 'Recipe generated successfully!',
+            'data': {
+                'history_id': history_id,
+                'resep': resep_text,
+                'mode': mode
+            }
+        })
+    except Exception as e:
+        return jsonify({
+            'error_code': 14,
+            'success': False,
+            'message': f'Database Error: {str(e)}'
+        }), 500
 
 # ==========================================
 # History and Favorites
