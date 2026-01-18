@@ -4,7 +4,7 @@ flask-cors
 flask-limiter
 python-dotenv
 passlib
-bcrypt
+bcrypt==4.0.1
 
 # --- Data Processing ---
 pandas
