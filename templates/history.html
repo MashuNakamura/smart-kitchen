@@ -11,9 +11,55 @@
 
     <style>
         body { font-family: 'Inter', sans-serif; }
+
+        @keyframes scaleIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .animate-scaleIn {
+            animation: scaleIn 0.2s ease-out;
+        }
     </style>
 </head>
+
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+
+<!-- DELETE CONFIRM MODAL -->
+<div id="delete-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeDeleteModal()"></div>
+
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-scaleIn">
+            <div class="p-6 text-center">
+                <div class="mx-auto mb-4 w-14 h-14 flex items-center justify-center rounded-full bg-red-100">
+                    <i class="fa-solid fa-trash text-red-500 text-2xl"></i>
+                </div>
+
+                <h3 class="text-lg font-bold text-gray-800 mb-2">
+                    Hapus Riwayat?
+                </h3>
+
+                <p class="text-sm text-gray-500 mb-6">
+                    Resep yang dihapus <b>tidak dapat dikembalikan</b>.
+                    Apakah Anda yakin ingin melanjutkan?
+                </p>
+
+                <div class="flex gap-3">
+                    <button onclick="closeDeleteModal()"
+                            class="flex-1 py-2.5 rounded-lg border border-gray-300 text-gray-600 font-medium hover:bg-gray-100 transition">
+                        Batal
+                    </button>
+
+                    <button id="confirm-delete-btn"
+                            class="flex-1 py-2.5 rounded-lg bg-red-500 text-white font-bold hover:bg-red-600 transition">
+                        Ya, Hapus
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <nav class="bg-white shadow-sm sticky top-0 z-50">
     <div class="container mx-auto px-4">
@@ -110,7 +156,6 @@
     document.addEventListener('DOMContentLoaded', () => {
         const user = sessionStorage.getItem('username');
         if(user) {
-            // Cek elemen ada sebelum set text (safety check)
             const navUser = document.getElementById('nav-username');
             const navUserMob = document.getElementById('nav-username-mobile');
             if(navUser) navUser.innerText = user;
@@ -119,7 +164,6 @@
         loadHistory();
     });
 
-    // --- NAVBAR LOGIC ---
     function toggleMobileMenu() {
         const menu = document.getElementById('mobile-menu');
         if (menu.classList.contains('hidden')) {
@@ -137,8 +181,6 @@
             const res = await fetch('/api/history');
             const json = await res.json();
 
-            console.log("Data API:", json); // Debugging di Console Browser
-
             if(json.success) {
                 allHistory = json.data.reverse();
                 renderGrid();
@@ -147,7 +189,7 @@
                 else showToast(json.message || "Gagal mengambil data", "error");
             }
         } catch(e) {
-            console.error("Error loading history:", e); // Cek detail error di Console
+            console.error("Error loading history:", e);
             showToast("Terjadi kesalahan script frontend", "error");
         } finally {
             document.getElementById('loading').classList.add('hidden');
@@ -174,7 +216,6 @@
         const empty = document.getElementById('empty-state');
         container.innerHTML = '';
 
-        // Logic Filter (Pastikan is_favorite dibaca boolean/integer 1)
         const data = currentFilter === 'fav'
             ? allHistory.filter(item => item.is_favorite == 1 || item.is_favorite === true)
             : allHistory;
@@ -191,13 +232,9 @@
             const card = document.createElement('div');
             card.className = "bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition group flex flex-col h-full";
 
-            // --- BAGIAN FIX VARIABEL DISINI ---
-            // Backend kirim: resep_text & input_bahan
-            // Kita harus pakai nama itu!
-
-            const rawResep = item.resep_text || ""; // Pakai resep_text (sesuai API)
+            const rawResep = item.resep_text || "";
             const snippet = rawResep.replace(/\*/g, '').substring(0, 100) + "...";
-            const bahanTitle = item.input_bahan || "Tanpa Bahan"; // Pakai input_bahan (sesuai API)
+            const bahanTitle = item.input_bahan || "Tanpa Bahan";
 
             card.innerHTML = `
                 <div class="flex justify-between items-start mb-3">
@@ -215,6 +252,9 @@
                     </button>
                     <button onclick="toggleFav('${item.id}')" class="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 hover:border-red-200 hover:bg-red-50 transition">
                         <i class="${(item.is_favorite == 1 || item.is_favorite === true) ? 'fa-solid text-red-500' : 'fa-regular text-gray-400'} fa-heart"></i>
+                    </button>
+                    <button onclick="confirmDelete('${item.id}')" class="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 hover:border-red-500 hover:bg-red-50 text-gray-400 hover:text-red-500 transition shadow-sm" title="Hapus">
+                        <i class="fa-solid fa-trash-can text-sm"></i>
                     </button>
                 </div>
             `;
@@ -249,7 +289,6 @@
             });
             const json = await res.json();
             if(json.success) {
-                // Update Local Data tanpa reload
                 const index = allHistory.findIndex(x => x.id == id);
                 if(index !== -1) {
                     allHistory[index].is_favorite = json.data.is_favorite;
@@ -260,6 +299,44 @@
         } catch(e) {
             console.error(e);
             showToast("Gagal update favorit", "error");
+        }
+    }
+
+    let deleteTargetId = null;
+
+    function confirmDelete(id) {
+        deleteTargetId = id;
+        document.getElementById('delete-modal').classList.remove('hidden');
+
+        document.getElementById('confirm-delete-btn').onclick = async () => {
+            await deleteHistory(deleteTargetId);
+            closeDeleteModal();
+        };
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('delete-modal').classList.add('hidden');
+        deleteTargetId = null;
+    }
+
+    async function deleteHistory(id) {
+        try {
+            const res = await fetch(`/api/history/${id}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const json = await res.json();
+
+            if (json.success) {
+                allHistory = allHistory.filter(item => item.id != id);
+                renderGrid();
+                showToast("Riwayat berhasil dihapus", "success");
+            } else {
+                showToast(json.message || "Gagal menghapus riwayat", "error");
+            }
+        } catch (e) {
+            console.error("Error Delete:", e);
+            showToast("Terjadi kesalahan koneksi", "error");
         }
     }
 
@@ -279,6 +356,19 @@
         toast.classList.remove('translate-x-full');
         toastTimer = setTimeout(() => toast.classList.add('translate-x-full'), 3000);
     }
+
+    // Keybind escape to close modals and enter to confirm delete
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            if (!document.getElementById('delete-modal').classList.contains('hidden')) {
+                closeDeleteModal();
+            }
+        } else if (e.key === 'Enter') {
+            if (!document.getElementById('delete-modal').classList.contains('hidden') && deleteTargetId) {
+                document.getElementById('confirm-delete-btn').click();
+            }
+        }
+    });
 </script>
 </body>
 </html>
