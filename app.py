@@ -1,11 +1,18 @@
-from flask import Flask, jsonify, request, render_template
+from flask import Flask, jsonify, request, render_template, session
 from flask_cors import CORS
+from passlib.context import CryptContext
 import utils
 import db_utils
 
 # Setup Flask application
 app = Flask(__name__)
 CORS(app)
+
+# Konfigurasi Secret Key untuk session
+app.secret_key = "sangat_rahasia_12345"
+
+# Konfigurasi Password Hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # ==========================================
 # Initialize AI Model and Database
@@ -28,7 +35,62 @@ except Exception as e:
 # ==========================================
 @app.route('/api/register', methods=['POST'])
 def register():
-    return "WIP: Register Endpoint"
+    # Get JSON Data from Request
+    data = request.get_json()
+    if not data:
+        return jsonify({
+            'error_code': 1,
+            'success': False,
+            'msg': 'Invalid JSON data.'
+        }), 400
+
+    # User Data
+    username = data["username"]
+    email    = data["email"]
+    password = data["password"]
+
+    # Validate Data
+    if not username or not email or not password:
+        return jsonify({
+            'error_code': 2,
+            'success': False,
+            'message': 'Username and Password are required.'
+        }), 400
+
+    # Validate Email Format
+    if not utils.email_format(email):
+        return jsonify({
+            'error_code': 3,
+            'success': False,
+            'message': 'Invalid email format.'
+        })
+
+    # Validate Password Strength
+    if not utils.minimum_password(password):
+        return jsonify({
+            'error_code': 4,
+            'success': False,
+            'message': 'Password terlalu lemah. Minimal 8 karakter, harus ada Huruf Besar, Kecil, Angka, dan Simbol.'
+        })
+
+    # Hash Password
+    hashed_password = pwd_context.hash(password)
+
+    # Send Data
+    result = db_utils.add_user(username, email, hashed_password)
+
+    if result['success']:
+        return jsonify({
+            'error_code': 0,
+            'success': True,
+            'message': 'User registered successfully.'
+        })
+    else:
+        return jsonify({
+            'error_code': 5,
+            'success': False,
+            'message': result['msg']
+        }), 400
 
 @app.route('/api/login', methods=['POST'])
 def login():
