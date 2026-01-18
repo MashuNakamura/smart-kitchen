@@ -315,29 +315,34 @@ def get_favorites():
 # ==========================================
 @app.route('/')
 def view_landing():
+    # Login atau tidak Login tetap bisa akses halaman ini
     is_logged_in = 'user_id' in session
     return render_template('index.html', is_logged_in=is_logged_in)
 
 @app.route('/register')
 def view_register():
+    # Redirect to dashboard if already logged in
     if 'user_id' in session:
         return redirect(url_for('view_dashboard'))
     return render_template('register.html')
 
 @app.route('/login')
 def view_login():
+    # Redirect to dashboard if already logged in
     if 'user_id' in session:
         return redirect(url_for('view_dashboard'))
     return render_template('login.html')
 
 @app.route('/dashboard')
 def view_dashboard():
+    # Protect route, redirect to login if not logged in
     if 'user_id' not in session:
         return redirect(url_for('view_login'))
     return render_template('dashboard.html')
 
 @app.route('/history')
 def view_history_page():
+    # Protect route, redirect to login if not logged in
     if 'user_id' not in session:
         return redirect(url_for('view_login'))
     return render_template('history.html')
