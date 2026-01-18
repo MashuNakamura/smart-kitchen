@@ -315,9 +315,8 @@ def get_favorites():
 # ==========================================
 @app.route('/')
 def view_landing():
-    if 'user_id' in session:
-        return redirect(url_for('view_dashboard'))
-    return render_template('index.html')
+    is_logged_in = 'user_id' in session
+    return render_template('index.html', is_logged_in=is_logged_in)
 
 @app.route('/register')
 def view_register():

@@ -10,7 +10,7 @@ from functools import wraps
 from flask import request, jsonify, session
 
 try:
-    from transformers import AutoModelForCausalLM, AutoTokenizer
+    from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TextStreamer
     from peft import PeftModel
     from sentence_transformers import SentenceTransformer
     import faiss
@@ -110,9 +110,19 @@ def load_resources():
     print("   [3/3] Loading AI Model (Qwen 1.5B)...")
     try:
         base_model_name = "Qwen/Qwen2-1.5B-Instruct"
+
+        # Lower memory usage with 4-bit quantization
+        bnb_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_compute_dtype=torch.float16,
+            bnb_4bit_use_double_quant=True,
+        )
+
         base_model = AutoModelForCausalLM.from_pretrained(
             base_model_name,
-            torch_dtype=torch.float16,
+            # torch_dtype=torch.float16,
+            quantization_config=bnb_config,
             device_map="auto",
             trust_remote_code=True
         )
@@ -306,11 +316,18 @@ Buatkan resep untuk: {bahan_input}
     # 3. Generate
     print("--- [AI] Generating Recipe... ---")
     try:
+        streamer = TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
+
         inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
         with torch.no_grad():
             outputs = model.generate(
-                **inputs, max_new_tokens=700, temperature=0.3, repetition_penalty=1.2,
-                do_sample=True, eos_token_id=tokenizer.eos_token_id, pad_token_id=tokenizer.pad_token_id
+                **inputs, max_new_tokens=700,
+                temperature=0.3,
+                repetition_penalty=1.2,
+                do_sample=True,
+                eos_token_id=tokenizer.eos_token_id,
+                pad_token_id=tokenizer.pad_token_id,
+                streamer=streamer
             )
 
         response = tokenizer.decode(outputs[0], skip_special_tokens=True)
