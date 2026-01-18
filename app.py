@@ -311,6 +311,33 @@ def get_favorites():
         }), 500
 
 # ==========================================
+# Delete History Item
+# ==========================================
+@app.route('/api/history/<int:history_id>', methods=['DELETE'])
+@utils.auth_required
+def delete_history_item(history_id):
+    try:
+        if history_id:
+            db_utils.delete_history_item(history_id)
+            return jsonify({
+                'error_code': 0,
+                'success': True,
+                'message': 'History item deleted successfully.'
+            })
+        else:
+            return jsonify({
+                'error_code': 16,
+                'success': False,
+                'message': 'History ID is required to delete item.'
+            }), 400
+    except Exception as e:
+        return jsonify({
+            'error_code': 15,
+            'success': False,
+            'message': f'Database Error: {str(e)}'
+        }), 500
+
+# ==========================================
 # Frontend Route
 # ==========================================
 @app.route('/')

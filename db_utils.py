@@ -228,7 +228,28 @@ def get_user_favorites(user_id):
         return []
 
 # ==========================================
-# TEST AREA
+# 5. Delete History Entry
+# ==========================================
+def delete_history_item(history_id):
+    """
+    Tugas: Menghapus entry history berdasarkan ID.
+    """
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+
+        cursor.execute('DELETE FROM history WHERE id = ?', (history_id,))
+
+        conn.commit()
+        conn.close()
+
+        print(f"[DB] Deleted History ID: {history_id}")
+    except Exception as e:
+        print(f"[DB Error] Delete History: {e}")
+        return False
+
+# ==========================================
+# TEST AREA (Run this file directly to test)
 # ==========================================
 if __name__ == '__main__':
     print("--- MULAI TEST DATABASE ---")

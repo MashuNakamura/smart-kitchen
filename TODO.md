@@ -32,9 +32,9 @@
 ## TODO List (Should Have Features)
 
 ### 1. Delete History (CRUD Completeness)
-- [ ] Buat endpoint API `DELETE /api/history/<id>`.
-- [ ] Tambahkan tombol "Hapus" (Tong Sampah) di kartu history.
-- [ ] Konfirmasi hapus (SweetAlert/Modal) sebelum eksekusi.
+- [x] Buat endpoint API `DELETE /api/history/<id>`.
+- [x] Tambahkan tombol "Hapus" (Tong Sampah) di kartu history.
+- [x] Konfirmasi hapus (SweetAlert/Modal) sebelum eksekusi.
 
 ### 2. Advanced Filtering (Server-Side Logic)
 - [ ] Filter berdasarkan rentang tanggal (Date Range Picker).
