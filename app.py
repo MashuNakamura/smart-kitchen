@@ -1,18 +1,45 @@
+import os
 from flask import Flask, jsonify, request, render_template, session
 from flask_cors import CORS
 from passlib.context import CryptContext
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
 import utils
 import db_utils
 
-# Setup Flask application
+# ==========================================
+# SETUP & SECURITY CONFIGURATION
+# ==========================================
 app = Flask(__name__)
-CORS(app)
+
+# NOTE : Change this in production to link deployed
+CORS(app, resources={r"/api/*": {"origins": ["http://127.0.0.1:5000", "http://localhost:5000"]}})
 
 # Konfigurasi Secret Key untuk session
-app.secret_key = "sangat_rahasia_12345"
+app.secret_key = os.environ.get("SECRET_KEY", "kelapasawit123!@#")
+
+# Rate Limiting to Prevent Abuse
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://"
+)
 
 # Konfigurasi Password Hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# ==========================================
+# ERROR HANDLERS
+# ==========================================
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    return jsonify({
+        'error_code': 429,
+        'success': False,
+        'message': f'Too many try. Please try again later {e}'
+    }), 429
 
 # ==========================================
 # Initialize AI Model and Database
@@ -34,25 +61,21 @@ except Exception as e:
 # AUTH ROUTES (Login & Register)
 # ==========================================
 @app.route('/api/register', methods=['POST'])
+@limiter.limit("5 per minute") # [Limit] Max 5x coba register per menit
 def register():
     # Get JSON Data from Request
-    data = request.get_json()
-    if not data:
-        return jsonify({
-            'error_code': 1,
-            'success': False,
-            'msg': 'Invalid JSON data.'
-        }), 400
+    data, error = utils.data_validate()
+    if error: return error
 
     # User Data
-    username = data["username"]
-    email    = data["email"]
-    password = data["password"]
+    username = data.get("username")
+    email    = data.get("email")
+    password = data.get("password")
 
     # Validate Data
     if not username or not email or not password:
         return jsonify({
-            'error_code': 2,
+            'error_code': 1,
             'success': False,
             'message': 'Username and Password are required.'
         }), 400
@@ -60,7 +83,7 @@ def register():
     # Validate Email Format
     if not utils.email_format(email):
         return jsonify({
-            'error_code': 3,
+            'error_code': 2,
             'success': False,
             'message': 'Invalid email format.'
         })
@@ -68,9 +91,9 @@ def register():
     # Validate Password Strength
     if not utils.minimum_password(password):
         return jsonify({
-            'error_code': 4,
+            'error_code': 3,
             'success': False,
-            'message': 'Password terlalu lemah. Minimal 8 karakter, harus ada Huruf Besar, Kecil, Angka, dan Simbol.'
+            'message': 'Password must be at least 8 characters long. 1 uppercase, 1 lowercase, 1 number.'
         })
 
     # Hash Password
@@ -87,37 +110,205 @@ def register():
         })
     else:
         return jsonify({
-            'error_code': 5,
+            'error_code': 4,
             'success': False,
-            'message': result['msg']
+            'message': result['message']
         }), 400
 
 @app.route('/api/login', methods=['POST'])
+@limiter.limit("10 per minute") # [Limit] Max 10x coba login per menit
 def login():
-    return "WIP: Login Endpoint"
+    # Get JSON Data from Request
+    data, error = utils.data_validate()
+    if error: return error
+
+    # User Data
+    identifier = data.get("identifier") # Bisa username atau email
+    password   = data.get("password")
+
+    # Validate Data
+    if not identifier or not password:
+        return jsonify({
+            'error_code': 5,
+            'success': False,
+            'message': 'Identifier and Password are required.'
+        }), 400
+
+    # Check User in Database
+    user = db_utils.check_user(identifier)
+
+    if user and pwd_context.verify(password, user['password']):
+        # Set Session
+        session['user_id'] = user['id']
+        session['username'] = user['username']
+
+        return jsonify({
+            'error_code': 0,
+            'success': True,
+            'message': f'Login successful. Welcome {user["username"]}!',
+            'username': user['username']
+        })
+    else:
+        return jsonify({
+            'error_code': 6,
+            'success': False,
+            'message': 'Invalid identifier or password.'
+        }), 401
+
+@app.route('/api/logout')
+def logout():
+    session.clear()
+    return jsonify({
+        'error_code': 0,
+        'success': True,
+        'message': 'Logged out successfully.'
+    })
 
 # ==========================================
 # Core Recipe Generation
 # ==========================================
 @app.route('/api/generate', methods=['POST'])
+@utils.auth_required
+@limiter.limit("1 per 3 minute") # [Limit] Max 1x generate resep per 3 menit
 def generate_recipe():
-    return "WIP: Generate Recipe Endpoint"
+    # Get JSON Data from Request
+    data, error = utils.data_validate()
+    if error: return error
+
+    # Bahan Input
+    bahan = data.get("bahan")
+    mode = data.get("mode", "normal")  # default mode is 'normal'
+
+    # Validate Bahan
+    if not bahan:
+        return jsonify({
+            'error_code': 7,
+            'success': False,
+            'message': 'Ingredient is required to generate recipe.'
+        }), 400
+
+    # Execute Recipe Generation
+    try:
+        # Call AI Utility to Generate Recipe
+        resep_text = utils.generate_resep_final(bahan, mode)
+
+        # Check if AI returned an error message
+        if "Maaf" in resep_text and "kendala" in resep_text:
+            return jsonify({
+                'error_code': 8,
+                'success': False,
+                'message': 'AI failed to generate recipe. Try different ingredients.'
+            }), 500
+
+    except Exception as e:
+        print(f"[AI ERROR] {e}")
+        return jsonify({
+            'error_code': 9,
+            'success': False,
+            'message': f'Server Error during generation: {str(e)}'
+        }), 500
+
+    # 5. SAVE TO DATABASE (History)
+    try:
+        user_id = session['user_id']
+        history_id = db_utils.save_recipe_to_history(user_id, bahan, resep_text)
+
+        return jsonify({
+            'error_code': 0,
+            'success': True,
+            'message': 'Recipe generated successfully!',
+            'data': {
+                'history_id': history_id,
+                'resep': resep_text,
+                'mode': mode
+            }
+        })
+    except Exception as e:
+        return jsonify({
+            'error_code': 10,
+            'success': False,
+            'message': f'Database Error: {str(e)}'
+        }), 500
 
 # ==========================================
 # History and Favorites
 # ==========================================
 @app.route('/api/history', methods=['GET'])
+@utils.auth_required
 def get_history():
-    return "WIP: Get History Endpoint"
+    try:
+        # Ambil User ID dari Session
+        user_id = session['user_id']
+
+        history_list = db_utils.get_user_history(user_id)
+
+        return jsonify({
+            'error_code': 0,
+            'success': True,
+            'message': 'User history retrieved successfully.',
+            'data': history_list
+        })
+    except Exception as e:
+        return jsonify({
+            'error_code': 11,
+            'success': False,
+            'message': f'Database Error: {str(e)}'
+        }), 500
 
 # Favorites are Optional
 @app.route('/api/favorites', methods=['POST']) # Toggle Like
+@utils.auth_required
 def add_favorite():
-    return "WIP: Toggle Favorite Endpoint"
+    # Get JSON Data from Request
+    data, error = utils.data_validate()
+    if error: return error
+
+    # Get History ID
+    history_id = data.get("history_id")
+    if not history_id:
+        return jsonify({
+            'error_code': 12,
+            'success': False,
+            'message': 'History ID is required to toggle favorite.'
+        }), 400
+
+    try:
+        is_fav = db_utils.toggle_favorite(history_id)
+        msg = "Added to favorites" if is_fav else "Removed from favorites"
+        return jsonify({
+            'error_code': 0,
+            'success': True,
+            'message': msg,
+            'data': {
+                'is_favorite': is_fav
+            }
+        })
+    except Exception as e:
+        return jsonify({
+            'error_code': 13,
+            'success': False,
+            'message': f'Database Error: {str(e)}'
+        }), 500
 
 @app.route('/api/favorites', methods=['GET']) # List Favorites
+@utils.auth_required
 def get_favorites():
-    return "WIP: Get Favorites Endpoint"
+    # Get User ID from Session
+    user_id = session['user_id']
+    try:
+        fav_list = db_utils.get_user_favorites(user_id)
+        return jsonify({
+            'error_code': 0,
+            'success': True,
+            'message': 'Favorites retrieved successfully.',
+            'data': fav_list
+        })
+    except Exception as e:
+        return jsonify({
+            'error_code': 14,
+            'success': False,
+            'message': f'Database Error: {str(e)}'
+        }), 500
 
 # ==========================================
 # Frontend Route
