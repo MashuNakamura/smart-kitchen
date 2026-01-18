@@ -75,7 +75,7 @@ def register():
     # Validate Data
     if not username or not email or not password:
         return jsonify({
-            'error_code': 2,
+            'error_code': 1,
             'success': False,
             'message': 'Username and Password are required.'
         }), 400
@@ -83,7 +83,7 @@ def register():
     # Validate Email Format
     if not utils.email_format(email):
         return jsonify({
-            'error_code': 3,
+            'error_code': 2,
             'success': False,
             'message': 'Invalid email format.'
         })
@@ -91,7 +91,7 @@ def register():
     # Validate Password Strength
     if not utils.minimum_password(password):
         return jsonify({
-            'error_code': 4,
+            'error_code': 3,
             'success': False,
             'message': 'Password must be at least 8 characters long. 1 uppercase, 1 lowercase, 1 number.'
         })
@@ -110,7 +110,7 @@ def register():
         })
     else:
         return jsonify({
-            'error_code': 5,
+            'error_code': 4,
             'success': False,
             'message': result['message']
         }), 400
@@ -129,7 +129,7 @@ def login():
     # Validate Data
     if not identifier or not password:
         return jsonify({
-            'error_code': 7,
+            'error_code': 5,
             'success': False,
             'message': 'Identifier and Password are required.'
         }), 400
@@ -150,7 +150,7 @@ def login():
         })
     else:
         return jsonify({
-            'error_code': 8,
+            'error_code': 6,
             'success': False,
             'message': 'Invalid identifier or password.'
         }), 401
@@ -182,7 +182,7 @@ def generate_recipe():
     # Validate Bahan
     if not bahan:
         return jsonify({
-            'error_code': 11,
+            'error_code': 7,
             'success': False,
             'message': 'Ingredient is required to generate recipe.'
         }), 400
@@ -195,7 +195,7 @@ def generate_recipe():
         # Check if AI returned an error message
         if "Maaf" in resep_text and "kendala" in resep_text:
             return jsonify({
-                'error_code': 12,
+                'error_code': 8,
                 'success': False,
                 'message': 'AI failed to generate recipe. Try different ingredients.'
             }), 500
@@ -203,7 +203,7 @@ def generate_recipe():
     except Exception as e:
         print(f"[AI ERROR] {e}")
         return jsonify({
-            'error_code': 13,
+            'error_code': 9,
             'success': False,
             'message': f'Server Error during generation: {str(e)}'
         }), 500
@@ -225,7 +225,7 @@ def generate_recipe():
         })
     except Exception as e:
         return jsonify({
-            'error_code': 14,
+            'error_code': 10,
             'success': False,
             'message': f'Database Error: {str(e)}'
         }), 500
@@ -234,17 +234,81 @@ def generate_recipe():
 # History and Favorites
 # ==========================================
 @app.route('/api/history', methods=['GET'])
+@utils.auth_required
 def get_history():
-    return "WIP: Get History Endpoint"
+    try:
+        # Ambil User ID dari Session
+        user_id = session['user_id']
+
+        history_list = db_utils.get_user_history(user_id)
+
+        return jsonify({
+            'error_code': 0,
+            'success': True,
+            'message': 'User history retrieved successfully.',
+            'data': history_list
+        })
+    except Exception as e:
+        return jsonify({
+            'error_code': 11,
+            'success': False,
+            'message': f'Database Error: {str(e)}'
+        }), 500
 
 # Favorites are Optional
 @app.route('/api/favorites', methods=['POST']) # Toggle Like
+@utils.auth_required
 def add_favorite():
-    return "WIP: Toggle Favorite Endpoint"
+    # Get JSON Data from Request
+    data, error = utils.data_validate()
+    if error: return error
+
+    # Get History ID
+    history_id = data.get("history_id")
+    if not history_id:
+        return jsonify({
+            'error_code': 12,
+            'success': False,
+            'message': 'History ID is required to toggle favorite.'
+        }), 400
+
+    try:
+        is_fav = db_utils.toggle_favorite(history_id)
+        msg = "Added to favorites" if is_fav else "Removed from favorites"
+        return jsonify({
+            'error_code': 0,
+            'success': True,
+            'message': msg,
+            'data': {
+                'is_favorite': is_fav
+            }
+        })
+    except Exception as e:
+        return jsonify({
+            'error_code': 13,
+            'success': False,
+            'message': f'Database Error: {str(e)}'
+        }), 500
 
 @app.route('/api/favorites', methods=['GET']) # List Favorites
+@utils.auth_required
 def get_favorites():
-    return "WIP: Get Favorites Endpoint"
+    # Get User ID from Session
+    user_id = session['user_id']
+    try:
+        fav_list = db_utils.get_user_favorites(user_id)
+        return jsonify({
+            'error_code': 0,
+            'success': True,
+            'message': 'Favorites retrieved successfully.',
+            'data': fav_list
+        })
+    except Exception as e:
+        return jsonify({
+            'error_code': 14,
+            'success': False,
+            'message': f'Database Error: {str(e)}'
+        }), 500
 
 # ==========================================
 # Frontend Route
