@@ -26,107 +26,129 @@
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col overflow-hidden"> <nav class="bg-white shadow-sm sticky top-0 z-50">
-    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-        <a href="/dashboard" class="flex items-center gap-2">
-            <i class="fa-solid fa-kitchen-set text-orange-500 text-2xl"></i>
-            <span class="text-xl font-bold tracking-tight text-gray-800">Smart<span class="text-orange-500">Kitchen</span></span>
-        </a>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
 
-        <div class="flex items-center gap-6">
-            <a href="/dashboard" class="text-sm font-bold text-orange-600 border-b-2 border-orange-500 pb-0.5">Dapur AI</a>
-            <a href="/history" class="text-sm font-medium text-gray-500 hover:text-orange-500 transition">Riwayat</a>
+<nav class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="container mx-auto px-4">
+        <div class="flex justify-between items-center py-3">
 
-            <div class="flex items-center gap-4 border-l pl-4 ml-2">
-                <span id="nav-username" class="text-sm font-bold text-gray-800 hidden md:block">User</span>
-                <button onclick="handleLogout()" class="text-gray-400 hover:text-red-500" title="Keluar">
-                    <i class="fa-solid fa-right-from-bracket text-xl"></i>
+            <a href="/dashboard" class="flex items-center gap-2">
+                <i class="fa-solid fa-kitchen-set text-orange-500 text-2xl"></i>
+                <span class="text-xl font-bold tracking-tight text-gray-800">Smart<span class="text-orange-500">Kitchen</span></span>
+            </a>
+
+            <div class="hidden md:flex items-center gap-6">
+                <a href="/dashboard" class="text-sm font-bold text-orange-600 border-b-2 border-orange-500 pb-0.5">Dapur AI</a>
+                <a href="/history" class="text-sm font-medium text-gray-500 hover:text-orange-500 transition">Riwayat</a>
+
+                <div class="flex items-center gap-4 border-l pl-4 ml-2 border-gray-200">
+                    <span id="nav-username" class="text-sm font-bold text-gray-800">User</span>
+                    <button onclick="handleLogout()" class="text-gray-400 hover:text-red-500 transition" title="Keluar">
+                        <i class="fa-solid fa-right-from-bracket text-xl"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button onclick="toggleMobileMenu()" class="md:hidden text-gray-500 hover:text-orange-500 focus:outline-none">
+                <i class="fa-solid fa-bars text-2xl"></i>
+            </button>
+        </div>
+
+        <div id="mobile-menu" class="hidden md:hidden border-t border-gray-100 py-4 space-y-3 bg-white">
+            <a href="/dashboard" class="block px-2 text-sm font-bold text-orange-600">Dapur AI</a>
+            <a href="/history" class="block px-2 text-sm font-medium text-gray-600 hover:text-orange-500">Riwayat Masakan</a>
+            <div class="border-t border-gray-100 pt-3 flex justify-between items-center px-2">
+                <span id="nav-username-mobile" class="text-sm font-bold text-gray-800">User</span>
+                <button onclick="handleLogout()" class="text-sm text-red-500 font-medium flex items-center gap-2">
+                    Keluar <i class="fa-solid fa-right-from-bracket"></i>
                 </button>
             </div>
         </div>
     </div>
 </nav>
 
-<main class="flex-grow container mx-auto px-4 py-6 h-[calc(100vh-70px)]"> <div id="toast" class="fixed top-20 right-5 z-50 transform translate-x-full transition-transform duration-300">
-    <div id="toast-content" class="px-6 py-4 rounded-lg shadow-xl text-white font-medium flex items-center gap-3"></div>
-</div>
+<main class="flex-grow container mx-auto px-4 py-6 max-w-3xl">
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
+    <div id="toast" class="fixed top-20 right-5 z-50 transform translate-x-full transition-transform duration-300 pointer-events-none">
+        <div id="toast-content" class="px-6 py-4 rounded-lg shadow-xl text-white font-medium flex items-center gap-3 pointer-events-auto"></div>
+    </div>
 
-        <div class="lg:col-span-5 flex flex-col h-full">
-            <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 flex flex-col h-full">
-                <h3 class="text-xl font-bold mb-4 flex items-center gap-2 text-gray-800">
-                    <i class="fa-solid fa-basket-shopping text-orange-500"></i> Pilih Bahan
-                </h3>
+    <section class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 mb-8">
+        <h3 class="text-lg font-bold mb-4 flex items-center gap-2 text-gray-800">
+            <i class="fa-solid fa-basket-shopping text-orange-500"></i> Pilih Bahan
+        </h3>
 
-                <input type="text" id="search-input" onkeyup="filterIngredients()" class="w-full pl-4 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none mb-4" placeholder="Cari bahan...">
+        <div class="relative mb-4">
+            <input type="text" id="search-input" onkeyup="filterIngredients()" class="w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none text-sm bg-gray-50" placeholder="Cari bahan (ex: Telur)...">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3.5 text-gray-400"></i>
+        </div>
 
-                <div class="mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Bahan Tersedia</div>
-                <div id="ingredient-pool" class="flex-grow overflow-y-auto custom-scroll p-1 border rounded-lg bg-gray-50 mb-4 content-start"></div>
+        <div id="ingredient-pool" class="max-h-[150px] overflow-y-auto custom-scroll p-2 border rounded-xl bg-white mb-4 min-h-[100px]">
+        </div>
 
-                <div class="mb-2 text-xs font-semibold text-gray-400 uppercase flex justify-between">
-                    <span>Terpilih</span>
-                    <button onclick="clearSelection()" class="text-red-500 hover:text-red-700 text-xs">Reset</button>
-                </div>
-                <div id="selected-pool" class="min-h-[60px] max-h-[100px] overflow-y-auto custom-scroll bg-orange-50 rounded-xl p-3 flex flex-wrap gap-2 border border-orange-100 mb-4">
-                    <span id="placeholder-text" class="text-gray-400 text-sm italic w-full text-center self-center">Belum ada bahan dipilih...</span>
-                </div>
+        <div class="flex justify-between items-center mb-2">
+            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Keranjang Masak</span>
+            <button onclick="clearSelection()" class="text-red-500 hover:text-red-700 text-xs font-medium">Reset</button>
+        </div>
+        <div id="selected-pool" class="min-h-[50px] bg-orange-50 rounded-xl p-3 flex flex-wrap gap-2 border border-orange-100 mb-6 transition-all">
+            <span id="placeholder-text" class="text-gray-400 text-sm italic w-full text-center self-center">Belum ada bahan dipilih...</span>
+        </div>
 
-                <input type="hidden" id="final-ingredients">
+        <input type="hidden" id="final-ingredients">
 
-                <div class="mb-4">
-                    <div class="flex gap-2 bg-gray-100 p-1 rounded-lg">
-                        <label class="cursor-pointer flex-1">
-                            <input type="radio" name="mode" value="normal" checked class="peer hidden">
-                            <div class="py-2 text-center rounded-md text-sm font-medium text-gray-500 peer-checked:bg-white peer-checked:text-orange-600 peer-checked:shadow-sm transition">Normal</div>
-                        </label>
-                        <label class="cursor-pointer flex-1">
-                            <input type="radio" name="mode" value="diet" class="peer hidden">
-                            <div class="py-2 text-center rounded-md text-sm font-medium text-gray-500 peer-checked:bg-white peer-checked:text-green-600 peer-checked:shadow-sm transition">Diet Sehat</div>
-                        </label>
-                    </div>
-                </div>
+        <div class="flex flex-col sm:flex-row gap-4 items-center">
+            <div class="flex gap-2 bg-gray-100 p-1 rounded-lg w-full sm:w-auto">
+                <label class="cursor-pointer flex-1 sm:flex-none">
+                    <input type="radio" name="mode" value="normal" checked class="peer hidden">
+                    <div class="px-6 py-2 text-center rounded-md text-sm font-medium text-gray-500 peer-checked:bg-white peer-checked:text-orange-600 peer-checked:shadow-sm transition">Normal</div>
+                </label>
+                <label class="cursor-pointer flex-1 sm:flex-none">
+                    <input type="radio" name="mode" value="diet" class="peer hidden">
+                    <div class="px-6 py-2 text-center rounded-md text-sm font-medium text-gray-500 peer-checked:bg-white peer-checked:text-green-600 peer-checked:shadow-sm transition">Diet</div>
+                </label>
+            </div>
 
-                <button onclick="generateRecipe()" id="btn-generate" class="w-full py-3 bg-gray-900 text-white font-bold rounded-xl shadow-lg hover:bg-gray-800 transition transform hover:-translate-y-1 flex justify-center items-center gap-2">
-                    <i class="fa-solid fa-wand-magic-sparkles text-orange-400"></i> Buat Resep Sekarang
+            <button onclick="generateRecipe()" id="btn-generate" class="w-full sm:flex-1 py-3 bg-gray-900 text-white font-bold rounded-xl shadow-lg hover:bg-gray-800 transition transform hover:-translate-y-1 flex justify-center items-center gap-2">
+                <i class="fa-solid fa-wand-magic-sparkles text-orange-400"></i> Buat Resep
+            </button>
+        </div>
+    </section>
+
+    <section id="output-section" class="hidden">
+
+        <div id="state-loading" class="hidden bg-white p-10 rounded-2xl shadow-lg border border-gray-100 text-center mb-10">
+            <div class="animate-spin w-12 h-12 border-4 border-orange-100 border-t-orange-500 rounded-full mx-auto mb-4"></div>
+            <h3 class="text-lg font-bold text-gray-800 mb-2">Chef Sedang Memasak...</h3>
+            <p class="text-gray-500 text-sm typing-loader">Mohon tunggu sebentar</p>
+        </div>
+
+        <div id="state-result" class="hidden bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-10">
+            <div class="bg-gradient-to-r from-orange-50 to-white px-6 py-4 border-b border-orange-100 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                    <i class="fa-solid fa-scroll text-orange-500"></i> Hasil Resep
+                </h2>
+                <button onclick="toggleFavorite()" id="btn-fav" class="h-9 w-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition shadow-sm">
+                    <i class="fa-regular fa-heart text-lg transition"></i>
                 </button>
             </div>
-        </div>
 
-        <div class="lg:col-span-7 h-full flex flex-col">
-            <div class="relative h-full bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-
-                <div id="state-placeholder" class="h-full flex flex-col justify-center items-center text-center p-12 text-gray-400 absolute inset-0">
-                    <i class="fa-solid fa-plate-wheat text-6xl mb-4 opacity-30"></i>
-                    <h3 class="text-lg font-semibold text-gray-500">Siap Memasak?</h3>
-                    <p class="text-sm max-w-xs">Pilih bahan di kiri, klik buat resep, dan lihat keajaiban AI di sini.</p>
-                </div>
-
-                <div id="state-loading" class="hidden h-full flex flex-col justify-center items-center text-center p-12 absolute inset-0 z-10 bg-white">
-                    <div class="animate-spin w-16 h-16 border-4 border-orange-100 border-t-orange-500 rounded-full mb-6"></div>
-                    <h3 class="text-xl font-bold text-gray-800 mb-2">Chef AI Sedang Bekerja</h3>
-                    <p class="text-gray-500 font-medium typing-loader animate-pulse">Sedang memproses...</p>
-                </div>
-
-                <div id="state-result" class="hidden h-full flex flex-col relative z-0">
-                    <div class="bg-gradient-to-r from-orange-50 to-white px-6 py-4 border-b border-orange-100 flex justify-between items-center sticky top-0 z-20">
-                        <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
-                            <i class="fa-solid fa-scroll text-orange-500"></i> Hasil Resep
-                        </h2>
-                        <button onclick="toggleFavorite()" id="btn-fav" class="h-9 w-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition shadow-sm">
-                            <i class="fa-regular fa-heart text-lg transition"></i>
-                        </button>
-                    </div>
-
-                    <div class="p-8 prose prose-orange max-w-none text-gray-700 leading-relaxed overflow-y-auto custom-scroll flex-grow" id="recipe-content"></div>
-                </div>
+            <div class="p-8 prose prose-orange max-w-none text-gray-700 leading-relaxed text-sm md:text-base" id="recipe-content">
             </div>
         </div>
+    </section>
+
+    <div id="state-placeholder" class="text-center py-8 text-gray-300">
+        <i class="fa-solid fa-utensils text-4xl mb-2"></i>
+        <p class="text-sm">Hasil akan muncul di sini</p>
     </div>
+
 </main>
 
+<footer class="bg-white border-t py-6 text-center text-gray-400 text-xs mt-auto">
+    <p>&copy; 2026 SmartKitchen AI</p>
+</footer>
+
 <script>
-    // LOGIC SAMA PERSIS SEPERTI SEBELUMNYA, CUMA HAPUS BAGIAN LOAD HISTORY
     const INGREDIENTS_DB = [
         "Ayam", "Sapi", "Telur", "Tahu", "Tempe", "Ikan", "Udang", "Cumi",
         "Bawang Merah", "Bawang Putih", "Cabai", "Tomat", "Wortel", "Kentang",
@@ -139,10 +161,24 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         const user = sessionStorage.getItem('username');
-        if(user) document.getElementById('nav-username').innerText = user;
+        if(user) {
+            document.getElementById('nav-username').innerText = user;
+            document.getElementById('nav-username-mobile').innerText = user;
+        }
         renderIngredientPool();
     });
 
+    // --- NAVBAR LOGIC ---
+    function toggleMobileMenu() {
+        const menu = document.getElementById('mobile-menu');
+        if (menu.classList.contains('hidden')) {
+            menu.classList.remove('hidden');
+        } else {
+            menu.classList.add('hidden');
+        }
+    }
+
+    // --- INGREDIENT LOGIC ---
     function renderIngredientPool(filter = "") {
         const pool = document.getElementById('ingredient-pool');
         pool.innerHTML = "";
@@ -151,7 +187,7 @@
             const btn = document.createElement('button');
             btn.className = isSel
                 ? "px-3 py-1.5 text-xs font-medium bg-orange-500 text-white rounded-full transition shadow-sm m-1"
-                : "px-3 py-1.5 text-xs font-medium bg-white border border-gray-200 text-gray-600 rounded-full hover:border-orange-300 hover:text-orange-500 transition m-1";
+                : "px-3 py-1.5 text-xs font-medium bg-gray-50 border border-gray-200 text-gray-600 rounded-full hover:border-orange-300 hover:text-orange-500 transition m-1";
             btn.innerText = ing;
             btn.onclick = () => toggleIngredient(ing);
             pool.appendChild(btn);
@@ -177,6 +213,7 @@
         const box = document.getElementById('selected-pool');
         const ph = document.getElementById('placeholder-text');
         const input = document.getElementById('final-ingredients');
+
         Array.from(box.children).forEach(c => { if(c.id !== 'placeholder-text') box.removeChild(c) });
 
         if (state.selected.size === 0) ph.classList.remove('hidden');
@@ -193,15 +230,24 @@
         input.value = Array.from(state.selected).join(", ");
     }
 
+    // --- GENERATE RECIPE ---
     async function generateRecipe() {
         const bahan = document.getElementById('final-ingredients').value;
         if (!bahan) return showToast("Pilih minimal satu bahan dulu ya!", "error");
         const mode = document.querySelector('input[name="mode"]:checked').value;
 
+        // Switch UI
         document.getElementById('state-placeholder').classList.add('hidden');
+        document.getElementById('output-section').classList.remove('hidden');
         document.getElementById('state-result').classList.add('hidden');
         document.getElementById('state-loading').classList.remove('hidden');
+
         document.getElementById('btn-generate').disabled = true;
+
+        // Auto scroll smooth ke bawah
+        setTimeout(() => {
+            document.getElementById('output-section').scrollIntoView({behavior: 'smooth', block: 'start'});
+        }, 100);
 
         try {
             const res = await fetch('/api/generate', {
@@ -219,10 +265,12 @@
             } else {
                 showToast(json.message || "Gagal membuat resep.", "error");
                 document.getElementById('state-placeholder').classList.remove('hidden');
+                document.getElementById('output-section').classList.add('hidden');
             }
         } catch (e) {
             showToast("Koneksi Error.", "error");
             document.getElementById('state-placeholder').classList.remove('hidden');
+            document.getElementById('output-section').classList.add('hidden');
         } finally {
             document.getElementById('state-loading').classList.add('hidden');
             document.getElementById('btn-generate').disabled = false;
@@ -232,10 +280,12 @@
     function renderResult(text) {
         const box = document.getElementById('state-result');
         const content = document.getElementById('recipe-content');
+
         let html = text
             .replace(/\n/g, '<br>')
             .replace(/\*\*(.*?)\*\*/g, '<strong class="text-gray-900">$1</strong>')
             .replace(/- (.*?)(<br>|$)/g, '<div class="flex gap-2 mb-1"><span class="text-orange-500">•</span> <span>$1</span></div>');
+
         content.innerHTML = html;
         box.classList.remove('hidden');
     }
@@ -264,9 +314,8 @@
     }
 
     function resetFavButton() {
-        const btn = document.getElementById('btn-fav');
-        const icon = btn.querySelector('i');
-        icon.className = "fa-regular fa-heart text-xl transition";
+        const icon = document.querySelector('#btn-fav i');
+        if(icon) icon.className = "fa-regular fa-heart text-xl transition";
     }
 
     async function handleLogout() {

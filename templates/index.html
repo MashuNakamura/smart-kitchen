@@ -18,9 +18,16 @@
             <i class="fa-solid fa-kitchen-set text-orange-500 text-2xl group-hover:rotate-12 transition"></i>
             <span class="text-xl font-bold tracking-tight text-gray-800">Smart<span class="text-orange-500">Kitchen</span></span>
         </a>
+
         <div class="flex items-center gap-3">
+            {% if is_logged_in %}
+            <a href="/dashboard" class="px-5 py-2 text-sm font-bold bg-orange-500 text-white rounded-full hover:bg-orange-600 transition shadow-lg shadow-orange-500/30 flex items-center gap-2">
+                Ke Dapur <i class="fa-solid fa-arrow-right"></i>
+            </a>
+            {% else %}
             <a href="/login" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-orange-500 transition">Masuk</a>
             <a href="/register" class="px-5 py-2 text-sm font-bold bg-orange-500 text-white rounded-full hover:bg-orange-600 transition shadow-lg shadow-orange-500/30">Daftar Sekarang</a>
+            {% endif %}
         </div>
     </div>
 </nav>
@@ -44,9 +51,16 @@
         </p>
 
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            {% if is_logged_in %}
+            <a href="/dashboard" class="px-8 py-4 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 transition transform hover:-translate-y-1 shadow-xl">
+                Lanjut Masak <i class="fa-solid fa-utensils ml-2"></i>
+            </a>
+            {% else %}
             <a href="/register" class="px-8 py-4 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 transition transform hover:-translate-y-1 shadow-xl">
                 Mulai Masak Sekarang <i class="fa-solid fa-arrow-right ml-2"></i>
             </a>
+            {% endif %}
+
             <a href="#features" class="px-8 py-4 bg-white text-gray-700 border border-gray-200 font-bold rounded-xl hover:bg-gray-50 transition">
                 Pelajari Fitur
             </a>
