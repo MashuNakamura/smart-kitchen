@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Riwayat Masakan - SmartKitchen</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='if_ukdc.png') }}">
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+
+<nav class="bg-white shadow-sm sticky top-0 z-40">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+        <a href="/dashboard" class="flex items-center gap-2">
+            <i class="fa-solid fa-kitchen-set text-orange-500 text-2xl"></i>
+            <span class="text-xl font-bold text-gray-800">Smart<span class="text-orange-500">Kitchen</span></span>
+        </a>
+        <div class="flex items-center gap-6">
+            <a href="/dashboard" class="text-sm font-medium text-gray-500 hover:text-orange-500 transition">Dapur AI</a>
+            <a href="/history" class="text-sm font-bold text-orange-600 border-b-2 border-orange-500 pb-0.5">Riwayat</a>
+
+            <button onclick="handleLogout()" class="text-gray-400 hover:text-red-500 ml-2" title="Keluar">
+                <i class="fa-solid fa-right-from-bracket text-xl"></i>
+            </button>
+        </div>
+    </div>
+</nav>
+
+<main class="flex-grow container mx-auto px-4 py-8">
+
+    <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+        <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+            <i class="fa-solid fa-clock-rotate-left text-orange-500"></i> Riwayat Masakan
+        </h1>
+
+        <div class="bg-white p-1 rounded-lg border shadow-sm flex">
+            <button onclick="setFilter('all')" id="tab-all" class="px-4 py-2 text-sm font-medium rounded-md bg-orange-100 text-orange-700 transition">Semua</button>
+            <button onclick="setFilter('fav')" id="tab-fav" class="px-4 py-2 text-sm font-medium rounded-md text-gray-500 hover:text-orange-600 transition">
+                <i class="fa-solid fa-heart text-red-500 mr-1"></i> Favorit
+            </button>
+        </div>
+    </div>
+
+    <div id="loading" class="text-center py-20 hidden">
+        <i class="fa-solid fa-circle-notch fa-spin text-4xl text-orange-300"></i>
+    </div>
+
+    <div id="empty-state" class="hidden text-center py-20 bg-white rounded-2xl border border-dashed border-gray-300">
+        <i class="fa-solid fa-box-open text-6xl text-gray-200 mb-4"></i>
+        <p class="text-gray-500 font-medium">Belum ada riwayat masakan.</p>
+        <a href="/dashboard" class="text-orange-500 hover:underline text-sm mt-2 block">Mulai Masak Sekarang</a>
+    </div>
+
+    <div id="history-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    </div>
+
+</main>
+
+<div id="recipe-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col transform transition-all scale-100">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50 rounded-t-2xl">
+                <h3 class="font-bold text-lg text-gray-800" id="modal-title">Detail Resep</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto prose prose-orange max-w-none text-gray-700 text-sm leading-relaxed" id="modal-content">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="fixed top-20 right-5 z-50 transform translate-x-full transition-transform duration-300">
+    <div id="toast-content" class="px-6 py-4 rounded-lg shadow-xl text-white font-medium flex items-center gap-3"></div>
+</div>
+
+<script>
+    let allHistory = [];
+    let currentFilter = 'all';
+
+    document.addEventListener('DOMContentLoaded', loadHistory);
+
+    async function loadHistory() {
+        document.getElementById('loading').classList.remove('hidden');
+        document.getElementById('history-grid').innerHTML = '';
+
+        try {
+            const res = await fetch('/api/history');
+            const json = await res.json();
+
+            if(json.success) {
+                allHistory = json.data.reverse(); // Terbaru diatas
+                renderGrid();
+            }
+        } catch(e) {
+            console.error("Error loading history");
+        } finally {
+            document.getElementById('loading').classList.add('hidden');
+        }
+    }
+
+    function setFilter(type) {
+        currentFilter = type;
+
+        // Update Tab UI
+        const btnAll = document.getElementById('tab-all');
+        const btnFav = document.getElementById('tab-fav');
+
+        if(type === 'all') {
+            btnAll.className = "px-4 py-2 text-sm font-medium rounded-md bg-orange-100 text-orange-700 transition shadow-sm";
+            btnFav.className = "px-4 py-2 text-sm font-medium rounded-md text-gray-500 hover:text-orange-600 transition";
+        } else {
+            btnAll.className = "px-4 py-2 text-sm font-medium rounded-md text-gray-500 hover:text-orange-600 transition";
+            btnFav.className = "px-4 py-2 text-sm font-medium rounded-md bg-red-50 text-red-600 transition shadow-sm";
+        }
+
+        renderGrid();
+    }
+
+    function renderGrid() {
+        const container = document.getElementById('history-grid');
+        const empty = document.getElementById('empty-state');
+        container.innerHTML = '';
+
+        // Logic Filter
+        const data = currentFilter === 'fav'
+            ? allHistory.filter(item => item.is_favorite)
+            : allHistory;
+
+        if(data.length === 0) {
+            empty.classList.remove('hidden');
+            empty.querySelector('p').innerText = currentFilter === 'fav' ? "Belum ada resep favorit." : "Belum ada riwayat.";
+            return;
+        } else {
+            empty.classList.add('hidden');
+        }
+
+        data.forEach(item => {
+            const card = document.createElement('div');
+            card.className = "bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition group flex flex-col h-full";
+
+            // Format Resep Singkat (Hapus bintang bold)
+            const snippet = item.resep_output.replace(/\*/g, '').substring(0, 100) + "...";
+
+            card.innerHTML = `
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="bg-orange-100 text-orange-700 text-xs font-bold px-2 py-1 rounded-md uppercase tracking-wide truncate max-w-[70%]">
+                            ${item.bahan_input}
+                        </span>
+                        <span class="text-xs text-gray-400">${new Date(item.created_at).toLocaleDateString()}</span>
+                    </div>
+
+                    <p class="text-sm text-gray-600 mb-4 flex-grow">${snippet}</p>
+
+                    <div class="flex items-center gap-2 pt-4 border-t border-gray-50 mt-auto">
+                        <button onclick="openModal('${encodeURIComponent(item.resep_output)}', '${item.bahan_input}')" class="flex-1 bg-gray-900 text-white text-xs font-bold py-2 rounded-lg hover:bg-gray-800 transition">
+                            Lihat Resep
+                        </button>
+                        <button onclick="toggleFav('${item.id}')" class="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 hover:border-red-200 hover:bg-red-50 transition">
+                            <i class="${item.is_favorite ? 'fa-solid text-red-500' : 'fa-regular text-gray-400'} fa-heart"></i>
+                        </button>
+                    </div>
+                `;
+            container.appendChild(card);
+        });
+    }
+
+    // --- MODAL LOGIC ---
+    function openModal(encText, title) {
+        const text = decodeURIComponent(encText);
+        const content = document.getElementById('modal-content');
+
+        // Format Markdown ke HTML Simpel
+        let html = text
+            .replace(/\n/g, '<br>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong class="text-gray-900">$1</strong>')
+            .replace(/- (.*?)(<br>|$)/g, '<div class="flex gap-2 mb-1"><span class="text-orange-500">•</span> <span>$1</span></div>');
+
+        document.getElementById('modal-title').innerText = "Resep: " + title;
+        content.innerHTML = html;
+        document.getElementById('recipe-modal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+        document.getElementById('recipe-modal').classList.add('hidden');
+    }
+
+    // --- FAV LOGIC ---
+    async function toggleFav(id) {
+        try {
+            const res = await fetch('/api/favorites', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ history_id: id })
+            });
+            const json = await res.json();
+            if(json.success) {
+                // Update Local Data
+                const index = allHistory.findIndex(x => x.id == id);
+                if(index !== -1) {
+                    allHistory[index].is_favorite = json.data.is_favorite;
+                    renderGrid(); // Re-render
+                    showToast(json.data.is_favorite ? "Masuk Favorit ❤️" : "Dihapus dari Favorit", "success");
+                }
+            }
+        } catch(e) {
+            console.error(e);
+        }
+    }
+
+    // --- AUTH & TOAST ---
+    async function handleLogout() {
+        await fetch('/api/logout');
+        window.location.href = '/login';
+    }
+
+    let toastTimer;
+    function showToast(msg, type) {
+        const toast = document.getElementById('toast');
+        const content = document.getElementById('toast-content');
+        if(toastTimer) clearTimeout(toastTimer);
+        content.innerText = msg;
+        content.className = `px-6 py-4 rounded-lg shadow-xl text-white font-medium flex items-center gap-3 ${type === 'error' ? 'bg-red-500' : 'bg-green-500'}`;
+        toast.classList.remove('translate-x-full');
+        toastTimer = setTimeout(() => toast.classList.add('translate-x-full'), 3000);
+    }
+</script>
+</body>
+</html>

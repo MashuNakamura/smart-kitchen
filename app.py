@@ -337,6 +337,12 @@ def view_dashboard():
         return redirect(url_for('view_login'))
     return render_template('dashboard.html')
 
+@app.route('/history')
+def view_history_page():
+    if 'user_id' not in session:
+        return redirect(url_for('view_login'))
+    return render_template('history.html')
+
 # ==========================================
 # Run the Flask Application
 # ==========================================
