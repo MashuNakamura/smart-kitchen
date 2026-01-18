@@ -38,7 +38,7 @@ def ratelimit_handler(e):
     return jsonify({
         'error_code': 429,
         'success': False,
-        'message': 'Too many try. Please try again later'
+        'message': f'Too many try. Please try again later {e}'
     }), 429
 
 # ==========================================
@@ -64,13 +64,8 @@ except Exception as e:
 @limiter.limit("5 per minute") # [Limit] Max 5x coba register per menit
 def register():
     # Get JSON Data from Request
-    data = request.get_json()
-    if not data:
-        return jsonify({
-            'error_code': 1,
-            'success': False,
-            'message': 'Invalid JSON data.'
-        }), 400
+    data, error = utils.data_validate()
+    if error: return error
 
     # User Data
     username = data.get("username")
@@ -124,13 +119,8 @@ def register():
 @limiter.limit("10 per minute") # [Limit] Max 10x coba login per menit
 def login():
     # Get JSON Data from Request
-    data = request.get_json()
-    if not data:
-        return jsonify({
-            'error_code': 6,
-            'success': False,
-            'message': 'Invalid JSON data.'
-        }), 400
+    data, error = utils.data_validate()
+    if error: return error
 
     # User Data
     identifier = data.get("identifier") # Bisa username atau email
@@ -178,24 +168,12 @@ def logout():
 # Core Recipe Generation
 # ==========================================
 @app.route('/api/generate', methods=['POST'])
+@utils.auth_required
 @limiter.limit("1 per 3 minute") # [Limit] Max 1x generate resep per 3 menit
 def generate_recipe():
-    # Check if User is Logged In
-    if 'user_id' not in session:
-        return jsonify({
-            'error_code': 9,
-            'success': False,
-            'message': 'Unauthorized. Please login first.'
-        }), 401
-
     # Get JSON Data from Request
-    data = request.get_json()
-    if not data:
-        return jsonify({
-            'error_code': 10,
-            'success': False,
-            'message': 'Invalid JSON data.'
-        }), 400
+    data, error = utils.data_validate()
+    if error: return error
 
     # Bahan Input
     bahan = data.get("bahan")
@@ -206,7 +184,7 @@ def generate_recipe():
         return jsonify({
             'error_code': 11,
             'success': False,
-            'message': 'Bahan is required to generate recipe.'
+            'message': 'Ingredient is required to generate recipe.'
         }), 400
 
     # Execute Recipe Generation
