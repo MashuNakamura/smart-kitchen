@@ -112,7 +112,56 @@ def register():
 @app.route('/api/login', methods=['POST'])
 @limiter.limit("10 per minute") # [Limit] Max 10x coba login per menit
 def login():
-    return "WIP: Login Endpoint"
+    # Get JSON Data from Request
+    data = request.get_json()
+    if not data:
+        return jsonify({
+            'error_code': 6,
+            'success': False,
+            'message': 'Invalid JSON data.'
+        }), 400
+
+    # User Data
+    identifier = data.get("identifier") # Bisa username atau email
+    password   = data.get("password")
+
+    # Validate Data
+    if not identifier or not password:
+        return jsonify({
+            'error_code': 7,
+            'success': False,
+            'message': 'Identifier and Password are required.'
+        }), 400
+
+    # Check User in Database
+    user = db_utils.check_user(identifier)
+
+    if user and pwd_context.verify(password, user['password']):
+        # Set Session
+        session['user_id'] = user['id']
+        session['username'] = user['username']
+
+        return jsonify({
+            'error_code': 0,
+            'success': True,
+            'message': f'Login successful. Welcome {user["username"]}!',
+            'username': user['username']
+        })
+    else:
+        return jsonify({
+            'error_code': 8,
+            'success': False,
+            'message': 'Invalid identifier or password.'
+        }), 401
+
+@app.route('/api/logout')
+def logout():
+    session.clear()
+    return jsonify({
+        'error_code': 0,
+        'success': True,
+        'message': 'Logged out successfully.'
+    })
 
 # ==========================================
 # Core Recipe Generation
