@@ -31,6 +31,17 @@ limiter = Limiter(
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # ==========================================
+# ERROR HANDLERS
+# ==========================================
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    return jsonify({
+        'error_code': 429,
+        'success': False,
+        'message': 'Too many try. Please try again later'
+    }), 429
+
+# ==========================================
 # Initialize AI Model and Database
 # ==========================================
 print("[APP] Starting AI & Database...")
@@ -87,7 +98,7 @@ def register():
         return jsonify({
             'error_code': 4,
             'success': False,
-            'message': 'Password terlalu lemah. Minimal 8 karakter, harus ada Huruf Besar, Kecil, Angka, dan Simbol.'
+            'message': 'Password must be at least 8 characters long. 1 uppercase, 1 lowercase, 1 number.'
         })
 
     # Hash Password
