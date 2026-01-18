@@ -6,6 +6,8 @@ import re
 import pandas as pd
 import torch
 from difflib import SequenceMatcher
+from functools import wraps
+from flask import request, jsonify, session
 
 try:
     from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -350,3 +352,35 @@ def minimum_password(password):
     if not re.search(r'[\W_]', password): # Simbol
         return False
     return True
+
+def data_validate():
+    """
+    Otomatis ambil JSON. Kalau kosong, return error response.
+    Cara pakai: data, error = utils.get_json_input()
+    """
+    data = request.get_json()
+    if not data:
+        return jsonify({
+            'error_code': 400,
+            'success': False,
+            'message': 'Invalid JSON data.'
+        }), 400
+
+    return data
+
+def auth_required(f):
+    """
+    Decorator: Cek apakah user sudah login (session).
+    Cara pakai: @utils.auth_required
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # Cek session
+        if 'user_id' not in session:
+            return jsonify({
+                'error_code': 401,
+                'success': False,
+                'message': 'Authentication required. Please log in.'
+            }), 401
+        return f(*args, **kwargs)
+    return decorated_function
