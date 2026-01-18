@@ -1,5 +1,5 @@
 import os
-from flask import Flask, jsonify, request, render_template, session
+from flask import Flask, jsonify, request, render_template, session, redirect, url_for
 from flask_cors import CORS
 from passlib.context import CryptContext
 from flask_limiter import Limiter
@@ -314,8 +314,28 @@ def get_favorites():
 # Frontend Route
 # ==========================================
 @app.route('/')
-def index():
+def view_landing():
+    if 'user_id' in session:
+        return redirect(url_for('view_dashboard'))
     return render_template('index.html')
+
+@app.route('/register')
+def view_register():
+    if 'user_id' in session:
+        return redirect(url_for('view_dashboard'))
+    return render_template('register.html')
+
+@app.route('/login')
+def view_login():
+    if 'user_id' in session:
+        return redirect(url_for('view_dashboard'))
+    return render_template('login.html')
+
+@app.route('/dashboard')
+def view_dashboard():
+    if 'user_id' not in session:
+        return redirect(url_for('view_login'))
+    return render_template('dashboard.html')
 
 # ==========================================
 # Run the Flask Application
