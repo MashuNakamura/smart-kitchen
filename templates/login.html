@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Masuk - SmartKitchen</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='if_ukdc.png') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+
+<nav class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="container mx-auto px-4 py-4 flex justify-center md:justify-start">
+        <a href="/" class="flex items-center gap-2 group">
+            <i class="fa-solid fa-kitchen-set text-orange-500 text-2xl group-hover:rotate-12 transition"></i>
+            <span class="text-xl font-bold tracking-tight text-gray-800">Smart<span class="text-orange-500">Kitchen</span></span>
+        </a>
+    </div>
+</nav>
+
+<main class="flex-grow flex items-center justify-center p-4">
+
+    <div id="toast" class="fixed top-20 right-5 z-50 transform translate-x-full transition-transform duration-300">
+        <div id="toast-content" class="px-6 py-4 rounded-lg shadow-xl text-white font-medium flex items-center gap-3"></div>
+    </div>
+
+    <div class="w-full max-w-md">
+        <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+
+            <div class="text-center mb-8">
+                <h2 class="text-2xl font-bold text-gray-800">Selamat Datang Kembali</h2>
+                <p class="text-sm text-gray-500 mt-2">Silakan masuk untuk mulai memasak</p>
+            </div>
+
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email atau Username</label>
+                        <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                                    <i class="fa-solid fa-user"></i>
+                                </span>
+                            <input type="text" name="identifier" class="w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition bg-gray-50 focus:bg-white" placeholder="username / email" required>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                        <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                                    <i class="fa-solid fa-lock"></i>
+                                </span>
+                            <input type="password" name="password" class="w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition bg-gray-50 focus:bg-white" placeholder="••••••••" required>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" id="btnSubmit" class="w-full mt-8 bg-gray-900 text-white font-bold py-3 rounded-xl hover:bg-gray-800 transition shadow-lg transform hover:-translate-y-0.5">
+                    Masuk
+                </button>
+            </form>
+
+            <div class="mt-8 pt-6 border-t border-gray-100 text-center">
+                <p class="text-sm text-gray-600">
+                    Belum punya akun?
+                    <a href="/register" class="text-orange-600 font-bold hover:text-orange-700 hover:underline">Daftar Sekarang</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer class="bg-white border-t py-6 text-center text-gray-400 text-xs">
+    <p>&copy; 2026 SmartKitchen AI - Final Project</p>
+</footer>
+
+<script>
+    let toastTimer = null;
+
+    async function handleLogin(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btnSubmit');
+        const originalText = btn.innerText;
+
+        // Loading State UI
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Memproses...';
+        btn.classList.add('opacity-75', 'cursor-not-allowed');
+
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+
+        try {
+            const res = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const json = await res.json();
+
+            if (res.ok && json.success) {
+                showToast("Login Berhasil! Mengalihkan...", "success");
+                sessionStorage.setItem('username', json.username);
+                setTimeout(() => window.location.href = '/dashboard', 1000);
+            } else {
+                showToast(json.message || "Login gagal.", "error");
+                resetBtn(btn, originalText);
+            }
+        } catch (err) {
+            console.error(err);
+            showToast("Gagal terhubung ke server.", "error");
+            resetBtn(btn, originalText);
+        }
+    }
+
+    function resetBtn(btn, text) {
+        btn.disabled = false;
+        btn.innerText = text;
+        btn.classList.remove('opacity-75', 'cursor-not-allowed');
+    }
+
+    function showToast(message, type) {
+        const toast = document.getElementById('toast');
+        const content = document.getElementById('toast-content');
+
+        if (toastTimer) { clearTimeout(toastTimer); toastTimer = null; }
+
+        content.innerText = message;
+        if(type === 'error') content.className = "px-6 py-4 rounded-lg shadow-xl text-white font-medium flex items-center gap-3 bg-red-500";
+        else content.className = "px-6 py-4 rounded-lg shadow-xl text-white font-medium flex items-center gap-3 bg-green-500";
+
+        toast.classList.remove('translate-x-full');
+        toastTimer = setTimeout(() => {
+            toast.classList.add('translate-x-full');
+        }, 3000);
+    }
+</script>
+</body>
+</html>
