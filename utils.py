@@ -360,13 +360,13 @@ def data_validate():
     """
     data = request.get_json()
     if not data:
-        return jsonify({
+        return None, (jsonify({
             'error_code': 400,
             'success': False,
             'message': 'Invalid JSON data.'
-        }), 400
+        }), 400)
 
-    return data
+    return data, None
 
 def auth_required(f):
     """
