@@ -3,20 +3,20 @@ flask
 flask-cors
 flask-limiter
 python-dotenv
+passlib
+bcrypt
 
 # --- Data Processing ---
 pandas
 numpy
 scipy
 
-# --- AI Core & Vector Database ---
-torch --index-url https://download.pytorch.org/whl/cu121
-
 # HuggingFace & LLM Utilities
 transformers>=4.37.0
 accelerate
 peft
 huggingface-hub
+bitsandbytes
 
 # Retrieval (RAG)
 sentence-transformers
