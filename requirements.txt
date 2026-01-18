@@ -1,6 +1,7 @@
 # --- Web Framework ---
 flask
 flask-cors
+flask-limiter
 python-dotenv
 
 # --- Data Processing ---

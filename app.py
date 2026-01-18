@@ -1,15 +1,31 @@
+import os
 from flask import Flask, jsonify, request, render_template, session
 from flask_cors import CORS
 from passlib.context import CryptContext
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
 import utils
 import db_utils
 
-# Setup Flask application
+# ==========================================
+# SETUP & SECURITY CONFIGURATION
+# ==========================================
 app = Flask(__name__)
-CORS(app)
+
+# NOTE : Change this in production to link deployed
+CORS(app, resources={r"/api/*": {"origins": ["http://127.0.0.1:5000", "http://localhost:5000"]}})
 
 # Konfigurasi Secret Key untuk session
-app.secret_key = "sangat_rahasia_12345"
+app.secret_key = os.environ.get("SECRET_KEY", "kelapasawit123!@#")
+
+# Rate Limiting to Prevent Abuse
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://"
+)
 
 # Konfigurasi Password Hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -34,6 +50,7 @@ except Exception as e:
 # AUTH ROUTES (Login & Register)
 # ==========================================
 @app.route('/api/register', methods=['POST'])
+@limiter.limit("5 per minute") # [Limit] Max 5x coba register per menit
 def register():
     # Get JSON Data from Request
     data = request.get_json()
@@ -41,13 +58,13 @@ def register():
         return jsonify({
             'error_code': 1,
             'success': False,
-            'msg': 'Invalid JSON data.'
+            'message': 'Invalid JSON data.'
         }), 400
 
     # User Data
-    username = data["username"]
-    email    = data["email"]
-    password = data["password"]
+    username = data.get("username")
+    email    = data.get("email")
+    password = data.get("password")
 
     # Validate Data
     if not username or not email or not password:
@@ -89,10 +106,11 @@ def register():
         return jsonify({
             'error_code': 5,
             'success': False,
-            'message': result['msg']
+            'message': result['message']
         }), 400
 
 @app.route('/api/login', methods=['POST'])
+@limiter.limit("10 per minute") # [Limit] Max 10x coba login per menit
 def login():
     return "WIP: Login Endpoint"
 
