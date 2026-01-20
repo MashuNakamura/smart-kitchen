@@ -249,6 +249,70 @@ def delete_history_item(history_id):
         return False
 
 # ==========================================
+# 6. User Profile Management
+# ==========================================
+def get_user_by_id(user_id):
+    """
+    Tugas: Mengambil data user berdasarkan ID.
+    """
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute('SELECT * FROM users WHERE id = ?', (user_id,))
+        user = cursor.fetchone()
+        conn.close()
+
+        if user:
+            return dict(user)
+        return None
+    except Exception as e:
+        print(f"[DB Error] Get User by ID: {e}")
+        return None
+
+def update_username(user_id, new_username):
+    """
+    Tugas: Mengupdate username user.
+    """
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+
+        # Check availability
+        cursor.execute("SELECT id FROM users WHERE username = ?", (new_username,))
+        existing = cursor.fetchone()
+        if existing:
+            conn.close()
+            return False, "Username already taken."
+
+        cursor.execute('UPDATE users SET username = ? WHERE id = ?', (new_username, user_id))
+        conn.commit()
+        conn.close()
+
+        return True, "Username updated successfully."
+    except Exception as e:
+        print(f"[DB Error] Update Username: {e}")
+        return False, str(e)
+
+def update_password(user_id, new_password_hash):
+    """
+    Tugas: Mengupdate password user.
+    """
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+
+        cursor.execute('UPDATE users SET password = ? WHERE id = ?', (new_password_hash, user_id))
+        conn.commit()
+        conn.close()
+
+        return True, "Password updated successfully."
+    except Exception as e:
+        print(f"[DB Error] Update Password: {e}")
+        return False, str(e)
+
+# ==========================================
 # TEST AREA (Run this file directly to test)
 # ==========================================
 if __name__ == '__main__':
