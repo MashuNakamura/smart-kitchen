@@ -338,6 +338,77 @@ def delete_history_item(history_id):
         }), 500
 
 # ==========================================
+# 6. Profile Management Routes (User)
+# ==========================================
+@app.route('/profile')
+@utils.auth_required
+def profile_page():
+    return render_template('profile.html')
+
+@app.route('/api/profile/update-username', methods=['POST'])
+@utils.auth_required
+@limiter.limit("5 per minute")
+def update_username_api():
+    # 1. Get Data
+    data, error = utils.data_validate()
+    if error: return error
+    
+    new_username = data.get("new_username")
+    user_id = session.get("user_id")
+
+    if not new_username:
+        return jsonify({'success': False, 'message': 'Username baru diperlukan.'}), 400
+
+    # 2. Update DB
+    success, msg = db_utils.update_username(user_id, new_username)
+
+    if success:
+        session['username'] = new_username # Update session
+        return jsonify({'success': True, 'message': msg})
+    else:
+        return jsonify({'success': False, 'message': msg}), 400
+
+@app.route('/api/profile/update-password', methods=['POST'])
+@utils.auth_required
+@limiter.limit("3 per minute")
+def update_password_api():
+    # 1. Get Data
+    data, error = utils.data_validate()
+    if error: return error
+
+    old_password = data.get("old_password")
+    new_password = data.get("new_password")
+    user_id = session.get("user_id")
+
+    if not old_password or not new_password:
+        return jsonify({'success': False, 'message': 'Semua field harus diisi.'}), 400
+
+    # 2. Validate Password Formatting
+    if not utils.minimum_password(new_password):
+        return jsonify({
+            'success': False,
+            'message': 'Password baru minimal 8 karakter, ada huruf besar, kecil, dan angka.'
+        }), 400
+
+    # 3. Get User Data to Verify Old Password
+    user = db_utils.get_user_by_id(user_id)
+    if not user:
+        return jsonify({'success': False, 'message': 'User tidak ditemukan.'}), 404
+    
+    # 4. Verify Old Password
+    if not pwd_context.verify(old_password, user['password']):
+        return jsonify({'success': False, 'message': 'Password lama salah.'}), 401
+
+    # 5. Hash New Password & Update
+    hashed_new_password = pwd_context.hash(new_password)
+    success, msg = db_utils.update_password(user_id, hashed_new_password)
+
+    if success:
+        return jsonify({'success': True, 'message': msg})
+    else:
+        return jsonify({'success': False, 'message': msg}), 500
+
+# ==========================================
 # Frontend Route
 # ==========================================
 @app.route('/')
