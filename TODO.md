@@ -46,9 +46,9 @@
 - [ ] Buat UI tombol navigasi halaman (Next, Prev, Page Numbers).
 
 ### 4. Edit Profil & Security (User Management)
-- [ ] Halaman pengaturan profil user.
-- [ ] Fitur ganti Username.
-- [ ] Fitur ganti Password (dengan validasi password lama & hashing password baru).
+- [x] Halaman pengaturan profil user.
+- [x] Fitur ganti Username.
+- [x] Fitur ganti Password (dengan validasi password lama & hashing password baru).
 
 ## Optional Features (Nice to Have)
 
