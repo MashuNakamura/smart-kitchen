@@ -36,9 +36,9 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
                         <div class="relative">
-                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-                                    <i class="fa-solid fa-user"></i>
-                                </span>
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                                <i class="fa-solid fa-user"></i>
+                            </span>
                             <input type="text" name="username" class="w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition bg-gray-50 focus:bg-white" placeholder="Contoh: mashu" required>
                         </div>
                     </div>
@@ -46,9 +46,9 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Alamat Email</label>
                         <div class="relative">
-                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-                                    <i class="fa-solid fa-envelope"></i>
-                                </span>
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                                <i class="fa-solid fa-envelope"></i>
+                            </span>
                             <input type="email" name="email" class="w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition bg-gray-50 focus:bg-white" placeholder="contoh@email.com" required>
                         </div>
                     </div>
@@ -56,14 +56,24 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                         <div class="relative">
-                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-                                    <i class="fa-solid fa-lock"></i>
-                                </span>
-                            <input type="password" name="password" class="w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition bg-gray-50 focus:bg-white" placeholder="••••••••" required>
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                                <i class="fa-solid fa-lock"></i>
+                            </span>
+                            <input type="password" name="password" id="password" class="w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition bg-gray-50 focus:bg-white" placeholder="••••••••" required>
                         </div>
                         <p class="text-xs text-gray-500 mt-2 flex items-center gap-1">
                             <i class="fa-solid fa-circle-info text-orange-400"></i> Min 8 karakter, Huruf Besar, Kecil, Angka
                         </p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Konfirmasi Password</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                                <i class="fa-solid fa-check-double"></i>
+                            </span>
+                            <input type="password" name="confirm_password" id="confirm_password" class="w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition bg-gray-50 focus:bg-white" placeholder="Ulangi Password" required>
+                        </div>
                     </div>
                 </div>
 
@@ -94,13 +104,31 @@
         const btn = document.getElementById('btnSubmit');
         const originalText = btn.innerText;
 
+        // Validasi Manual: Cek Password Match
+        const pass = document.getElementById('password').value;
+        const confirm = document.getElementById('confirm_password').value;
+
+        if (pass !== confirm) {
+            showToast("Password dan Konfirmasi Password tidak sama!", "error");
+            // Goyang input biar user sadar
+            document.getElementById('confirm_password').classList.add('ring-2', 'ring-red-500');
+            setTimeout(() => document.getElementById('confirm_password').classList.remove('ring-2', 'ring-red-500'), 2000);
+            return;
+        }
+
         // Loading State
         btn.disabled = true;
         btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Memproses...';
         btn.classList.add('opacity-75', 'cursor-not-allowed');
 
         const formData = new FormData(e.target);
-        const data = Object.fromEntries(formData.entries());
+        // Kita hanya kirim field yang dibutuhkan API (username, email, password)
+        // field confirm_password tidak perlu dikirim ke backend
+        const data = {
+            username: formData.get('username'),
+            email: formData.get('email'),
+            password: formData.get('password')
+        };
 
         try {
             const res = await fetch('/api/register', {
@@ -141,8 +169,13 @@
         if (toastTimer) { clearTimeout(toastTimer); toastTimer = null; }
 
         content.innerText = message;
-        if(type === 'error') content.className = "px-6 py-4 rounded-lg shadow-xl text-white font-medium flex items-center gap-3 bg-red-500";
-        else content.className = "px-6 py-4 rounded-lg shadow-xl text-white font-medium flex items-center gap-3 bg-green-500";
+        if(type === 'error') {
+            content.className = "px-6 py-4 rounded-lg shadow-xl text-white font-medium flex items-center gap-3 bg-red-500";
+            content.innerHTML = `<i class="fa-solid fa-circle-xmark text-xl"></i> ${message}`;
+        } else {
+            content.className = "px-6 py-4 rounded-lg shadow-xl text-white font-medium flex items-center gap-3 bg-green-500";
+            content.innerHTML = `<i class="fa-solid fa-circle-check text-xl"></i> ${message}`;
+        }
 
         toast.classList.remove('translate-x-full');
         toastTimer = setTimeout(() => {

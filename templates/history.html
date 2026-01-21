@@ -43,6 +43,27 @@
     </div>
 </div>
 
+<div id="logout-modal" class="fixed inset-0 z-[100] hidden">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeLogoutModal()"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+            <div class="p-6 text-center">
+                <div class="mx-auto mb-4 w-14 h-14 flex items-center justify-center rounded-full bg-red-100">
+                    <i class="fa-solid fa-right-from-bracket text-red-500 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-800 mb-2">Ingin Keluar?</h3>
+                <p class="text-sm text-gray-500 mb-6">
+                    Anda harus masuk kembali untuk mengakses Dapur AI. Apakah Anda yakin?
+                </p>
+                <div class="flex gap-3">
+                    <button onclick="closeLogoutModal()" class="flex-1 py-2.5 rounded-lg border border-gray-300 text-gray-600 font-medium hover:bg-gray-100 transition">Batal</button>
+                    <button onclick="performLogout()" class="flex-1 py-2.5 rounded-lg bg-red-500 text-white font-bold hover:bg-red-600 transition">Ya, Keluar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <nav class="bg-white shadow-sm z-50 flex-none">
     <div class="container mx-auto px-4">
         <div class="flex justify-between items-center py-3">
@@ -55,7 +76,7 @@
                 <a href="/history" class="text-sm font-bold text-orange-600 border-b-2 border-orange-500 pb-0.5">Riwayat</a>
                 <div class="flex items-center gap-4 border-l pl-4 ml-2 border-gray-200">
                     <a href="/profile" id="nav-username" class="text-sm font-bold text-gray-800 hover:text-orange-600 transition">{{ session.get('username', 'User') }}</a>
-                    <button onclick="handleLogout()" class="text-gray-400 hover:text-red-500 transition" title="Keluar"><i class="fa-solid fa-right-from-bracket text-xl"></i></button>
+                    <button onclick="confirmLogout()" class="text-gray-400 hover:text-red-500 transition" title="Keluar"><i class="fa-solid fa-right-from-bracket text-xl"></i></button>
                 </div>
             </div>
             <button onclick="toggleMobileMenu()" class="md:hidden text-gray-500 hover:text-orange-500 focus:outline-none"><i class="fa-solid fa-bars text-2xl"></i></button>
@@ -66,7 +87,7 @@
             <a href="/profile" class="block px-2 text-sm font-medium text-gray-600 hover:text-orange-500">Pengaturan Profil</a>
             <div class="border-t border-gray-100 pt-3 flex justify-between items-center px-2">
                 <span id="nav-username-mobile" class="text-sm font-bold text-gray-800">{{ session.get('username', 'User') }}</span>
-                <button onclick="handleLogout()" class="text-sm text-red-500 font-medium flex items-center gap-2">Keluar <i class="fa-solid fa-right-from-bracket"></i></button>
+                <button onclick="confirmLogout()" class="text-sm text-red-500 font-medium flex items-center gap-2">Keluar <i class="fa-solid fa-right-from-bracket"></i></button>
             </div>
         </div>
     </div>
@@ -140,15 +161,21 @@
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
     <div class="absolute inset-0 flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
-            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
-                <h3 class="font-bold text-lg text-gray-800 truncate pr-4 flex items-center gap-2">
-                    <i class="fa-solid fa-utensils text-orange-500"></i> <span id="modal-title">Detail Resep</span>
+            <div class="px-6 py-4 border-b flex justify-between items-start gap-4 bg-gray-50 shrink-0">
+                <h3 class="font-bold text-lg text-gray-800 flex items-start gap-2 flex-1 min-w-0">
+                    <i class="fa-solid fa-utensils text-orange-500 mt-1 shrink-0"></i>
+                    <span id="modal-title" class="break-words leading-snug">
+                        Detail Resep
+                    </span>
                 </h3>
-                <div class="flex items-center gap-2">
-                    <button onclick="downloadPDF()" class="text-sm bg-white border border-gray-300 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-100 hover:text-orange-600 transition shadow-sm flex items-center gap-2">
-                        <i class="fa-solid fa-file-pdf text-red-500"></i> Simpan PDF
+                <div class="flex items-center gap-2 shrink-0 ml-2">
+                    <button onclick="downloadPDF()" class="group text-xs sm:text-sm bg-white border border-gray-300 text-gray-700 px-3 py-2 rounded-lg hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 transition shadow-sm flex items-center gap-2 whitespace-nowrap">
+                        <i class="fa-solid fa-file-pdf text-red-500 group-hover:scale-110 transition-transform"></i>
+                        <span>Simpan PDF</span>
                     </button>
-                    <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
+                    <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-200 rounded-lg transition">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
                 </div>
             </div>
             <div id="modal-content-wrapper" class="p-8 overflow-y-auto custom-scroll bg-white">
@@ -178,6 +205,21 @@
         }
         loadHistory();
     });
+
+    // --- LOGOUT LOGIC (WITH MODAL) ---
+    function confirmLogout() {
+        document.getElementById('logout-modal').classList.remove('hidden');
+    }
+
+    function closeLogoutModal() {
+        document.getElementById('logout-modal').classList.add('hidden');
+    }
+
+    async function performLogout() {
+        await fetch('/api/logout');
+        sessionStorage.clear();
+        window.location.href = '/login';
+    }
 
     function toggleMobileMenu() { document.getElementById('mobile-menu').classList.toggle('hidden'); }
     function resetPageAndLoad() { currentPage = 1; loadHistory(); }
@@ -376,7 +418,16 @@
             if ((await res.json()).success) { loadHistory(); showToast("Dihapus", "success"); }
         } catch (e) { showToast("Gagal", "error"); }
     }
-    async function handleLogout() { if(confirm("Keluar?")) { await fetch('/api/logout'); window.location.href = '/login'; } }
+
+    // Updated handleLogout to use Modal logic isn't needed here as we use confirmLogout directly now
+    // But kept keydown event listener
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            if (!document.getElementById('delete-modal').classList.contains('hidden')) closeDeleteModal();
+            if (!document.getElementById('recipe-modal').classList.contains('hidden')) closeModal();
+            if (!document.getElementById('logout-modal').classList.contains('hidden')) closeLogoutModal();
+        }
+    });
 
     let toastTimer;
     function showToast(msg, type) {
@@ -388,12 +439,6 @@
         toast.classList.remove('translate-x-full');
         toastTimer = setTimeout(() => toast.classList.add('translate-x-full'), 3000);
     }
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            if (!document.getElementById('delete-modal').classList.contains('hidden')) closeDeleteModal();
-            if (!document.getElementById('recipe-modal').classList.contains('hidden')) closeModal();
-        }
-    });
 </script>
 </body>
 </html>
