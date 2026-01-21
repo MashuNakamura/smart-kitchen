@@ -53,6 +53,6 @@
 ## Optional Features (Nice to Have)
 
 ### 5. Ekspor Resep
-- [ ] Integrasi library JS (`html2canvas` atau `jspdf`).
-- [ ] Tombol "Simpan sebagai Gambar/PDF" di modal detail resep.
-- [ ] Formatting hasil ekspor agar layak cetak.
+- [x] Integrasi library JS (`html2canvas` atau `jspdf`).
+- [x] Tombol "Simpan sebagai Gambar/PDF" di modal detail resep.
+- [x] Formatting hasil ekspor agar layak cetak.

@@ -5,13 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Riwayat Masakan - SmartKitchen</title>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='if_ukdc.png') }}">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
     <style>
         body { font-family: 'Inter', sans-serif; }
-        /* Custom Scrollbar untuk area kartu */
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-track { background: #f9fafb; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
@@ -99,50 +102,38 @@
                         <span class="text-gray-300">s/d</span>
                         <input type="date" id="end-date" onchange="resetPageAndLoad()" class="bg-transparent text-sm outline-none p-0 text-gray-600">
                     </div>
-                    <button onclick="resetFilters()" class="text-xs text-orange-600 font-bold hover:bg-orange-50 px-3 py-2 rounded-lg transition">
-                        Reset
-                    </button>
+                    <button onclick="resetFilters()" class="text-xs text-orange-600 font-bold hover:bg-orange-50 px-3 py-2 rounded-lg transition">Reset</button>
                 </div>
             </div>
         </div>
     </div>
 
     <div id="history-scroll-area" class="flex-grow overflow-y-auto custom-scroll pb-24 pr-2 relative">
-
         <div id="loading" class="text-center py-20 hidden">
             <i class="fa-solid fa-circle-notch fa-spin text-4xl text-orange-300"></i>
             <p class="text-gray-400 mt-2 text-sm font-medium">Memproses data...</p>
         </div>
-
         <div id="empty-state" class="hidden text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
             <i class="fa-solid fa-magnifying-glass text-6xl text-gray-100 mb-4"></i>
             <p class="text-gray-500 font-medium text-lg">Tidak ada riwayat ditemukan.</p>
             <button onclick="resetFilters()" class="text-orange-500 font-bold mt-4 hover:underline">Lihat Semua</button>
         </div>
-
-        <div id="history-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        </div>
+        <div id="history-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
     </div>
 
     <div id="pagination-controls" class="fixed bottom-6 left-0 right-0 flex justify-center items-center gap-4 z-40 hidden pointer-events-none">
         <div class="bg-white/90 backdrop-blur-md border border-gray-200 shadow-xl rounded-2xl p-2 flex items-center gap-4 pointer-events-auto">
-
             <button id="btn-prev" onclick="changePage(-1)"
                     class="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-600 disabled:opacity-40 disabled:cursor-not-allowed transition shadow-sm">
                 <i class="fa-solid fa-chevron-left"></i>
             </button>
-
-            <span id="page-info" class="text-xs font-bold text-gray-700 tabular-nums min-w-[80px] text-center">
-                Hal 1 dari 1
-            </span>
-
+            <span id="page-info" class="text-xs font-bold text-gray-700 tabular-nums min-w-[80px] text-center">Hal 1 dari 1</span>
             <button id="btn-next" onclick="changePage(1)"
                     class="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-600 disabled:opacity-40 disabled:cursor-not-allowed transition shadow-sm">
                 <i class="fa-solid fa-chevron-right"></i>
             </button>
         </div>
     </div>
-
 </main>
 
 <div id="recipe-modal" class="fixed inset-0 z-[70] hidden">
@@ -150,10 +141,19 @@
     <div class="absolute inset-0 flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
             <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
-                <h3 class="font-bold text-lg text-gray-800 truncate pr-4" id="modal-title">Detail Resep</h3>
-                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
+                <h3 class="font-bold text-lg text-gray-800 truncate pr-4 flex items-center gap-2">
+                    <i class="fa-solid fa-utensils text-orange-500"></i> <span id="modal-title">Detail Resep</span>
+                </h3>
+                <div class="flex items-center gap-2">
+                    <button onclick="downloadPDF()" class="text-sm bg-white border border-gray-300 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-100 hover:text-orange-600 transition shadow-sm flex items-center gap-2">
+                        <i class="fa-solid fa-file-pdf text-red-500"></i> Simpan PDF
+                    </button>
+                    <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
             </div>
-            <div class="p-8 overflow-y-auto custom-scroll prose prose-orange max-w-none text-gray-700 text-sm leading-relaxed" id="modal-content"></div>
+            <div id="modal-content-wrapper" class="p-8 overflow-y-auto custom-scroll bg-white">
+                <div id="modal-content" class="prose prose-orange max-w-none text-gray-700 text-sm leading-relaxed"></div>
+            </div>
         </div>
     </div>
 </div>
@@ -168,6 +168,7 @@
     let deleteTargetId = null;
     let currentPage = 1;
     let totalPages = 1;
+    let currentRecipeTitle = "";
 
     document.addEventListener('DOMContentLoaded', () => {
         const user = sessionStorage.getItem('username');
@@ -179,11 +180,7 @@
     });
 
     function toggleMobileMenu() { document.getElementById('mobile-menu').classList.toggle('hidden'); }
-
-    function resetPageAndLoad() {
-        currentPage = 1;
-        loadHistory();
-    }
+    function resetPageAndLoad() { currentPage = 1; loadHistory(); }
 
     async function loadHistory() {
         const loading = document.getElementById('loading');
@@ -200,35 +197,24 @@
         const start = document.getElementById('start-date').value;
         const end = document.getElementById('end-date').value;
 
-        // per_page=6 (tapi karena layout scrollable, ini tetap aman)
-        // Kalau mau lebih banyak item sebelum scroll, ganti jadi 9 atau 12
         let url = `/api/history?page=${currentPage}&per_page=6&search=${encodeURIComponent(search)}&start=${start}&end=${end}`;
 
         try {
             const res = await fetch(url);
             const json = await res.json();
-
             if(json.success) {
                 allHistory = json.data;
                 totalPages = json.meta.total_pages;
                 document.getElementById('page-info').innerText = `Hal ${json.meta.current_page} dari ${totalPages || 1}`;
-
                 document.getElementById('btn-prev').disabled = (currentPage <= 1);
                 document.getElementById('btn-next').disabled = (currentPage >= totalPages);
-
                 if (allHistory.length > 0) pagination.classList.remove('hidden');
-
                 renderGrid();
             } else {
                 if(res.status === 401) window.location.href = '/login';
-                else showToast(json.message, "error");
             }
-        } catch(e) {
-            console.error(e);
-            showToast("Gagal memuat data", "error");
-        } finally {
-            loading.classList.add('hidden');
-        }
+        } catch(e) { console.error(e); }
+        finally { loading.classList.add('hidden'); }
     }
 
     function changePage(delta) {
@@ -236,7 +222,6 @@
         if (newPage > 0 && newPage <= totalPages) {
             currentPage = newPage;
             loadHistory();
-            // Scroll ke atas grid saat ganti halaman
             document.getElementById('history-scroll-area').scrollTop = 0;
         }
     }
@@ -252,10 +237,7 @@
         const container = document.getElementById('history-grid');
         const empty = document.getElementById('empty-state');
         container.innerHTML = '';
-
-        const data = currentFilter === 'fav'
-            ? allHistory.filter(item => item.is_favorite == 1)
-            : allHistory;
+        const data = currentFilter === 'fav' ? allHistory.filter(item => item.is_favorite == 1) : allHistory;
 
         if(data.length === 0) {
             if(currentPage === 1 && currentFilter === 'all') empty.classList.remove('hidden');
@@ -264,9 +246,7 @@
 
         data.forEach(item => {
             const card = document.createElement('div');
-            // HAPUS SEMUA ANIMASI DI SINI
             card.className = "bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition group flex flex-col h-full";
-
             const snippet = (item.resep_text || "").replace(/\*/g, '').substring(0, 100) + "...";
             const bahan = item.input_bahan || "Tanpa Bahan";
 
@@ -295,16 +275,75 @@
         resetPageAndLoad();
     }
 
+    // --- MODAL & EXPORT LOGIC ---
     function openModal(encText, title) {
         const text = decodeURIComponent(encText);
+        currentRecipeTitle = title; // Simpan judul untuk nama file PDF
+
         const content = document.getElementById('modal-content');
         let html = text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/- (.*?)(<br>|$)/g, '<div class="flex gap-2 mb-1"><span>•</span><span>$1</span></div>');
+
         document.getElementById('modal-title').innerText = "Resep: " + title;
         content.innerHTML = html;
         document.getElementById('recipe-modal').classList.remove('hidden');
     }
+
     function closeModal() { document.getElementById('recipe-modal').classList.add('hidden'); }
+
+    // --- FITUR EKSPOR PDF (CLIENT SIDE) ---
+    async function downloadPDF() {
+        const { jsPDF } = window.jspdf;
+        const content = document.getElementById('modal-content-wrapper'); // Tangkap seluruh area konten modal
+
+        // Feedback User
+        const btn = document.querySelector('button[onclick="downloadPDF()"]');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Proses...`;
+        btn.disabled = true;
+
+        try {
+            // 1. Screenshot DOM menjadi Canvas
+            const canvas = await html2canvas(content, {
+                scale: 2, // Biar tajam (High DPI)
+                useCORS: true,
+                backgroundColor: '#ffffff' // Pastikan background putih
+            });
+
+            const imgData = canvas.toDataURL('image/png');
+
+            // 2. Setup PDF (A4)
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
+
+            const imgWidth = pdfWidth - 20; // Margin kiri kanan 10mm
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+            // Header SmartKitchen
+            pdf.setFontSize(16);
+            pdf.setTextColor(255, 100, 0); // Orange
+            pdf.text("SmartKitchen AI Recipe", 10, 15);
+
+            pdf.setFontSize(10);
+            pdf.setTextColor(100);
+            pdf.text("Generated on: " + new Date().toLocaleString(), 10, 22);
+
+            // Masukkan Gambar Resep
+            pdf.addImage(imgData, 'PNG', 10, 30, imgWidth, imgHeight);
+
+            // 3. Save
+            pdf.save(`Resep_SmartKitchen_${currentRecipeTitle}.pdf`);
+            showToast("Resep berhasil disimpan! 📄", "success");
+
+        } catch (error) {
+            console.error(error);
+            showToast("Gagal membuat PDF", "error");
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
 
     async function toggleFav(id) {
         try {
@@ -328,27 +367,17 @@
     function confirmDelete(id) {
         deleteTargetId = id;
         document.getElementById('delete-modal').classList.remove('hidden');
-        document.getElementById('confirm-delete-btn').onclick = async () => {
-            await deleteHistory(deleteTargetId);
-            closeDeleteModal();
-        };
+        document.getElementById('confirm-delete-btn').onclick = async () => { await deleteHistory(deleteTargetId); closeDeleteModal(); };
     }
-    function closeDeleteModal() {
-        document.getElementById('delete-modal').classList.add('hidden');
-        deleteTargetId = null;
-    }
+    function closeDeleteModal() { document.getElementById('delete-modal').classList.add('hidden'); deleteTargetId = null; }
     async function deleteHistory(id) {
         try {
             const res = await fetch(`/api/history/${id}`, { method: 'DELETE' });
-            if ((await res.json()).success) {
-                loadHistory();
-                showToast("Dihapus", "success");
-            }
+            if ((await res.json()).success) { loadHistory(); showToast("Dihapus", "success"); }
         } catch (e) { showToast("Gagal", "error"); }
     }
-    async function handleLogout() {
-        if(confirm("Keluar?")) { await fetch('/api/logout'); window.location.href = '/login'; }
-    }
+    async function handleLogout() { if(confirm("Keluar?")) { await fetch('/api/logout'); window.location.href = '/login'; } }
+
     let toastTimer;
     function showToast(msg, type) {
         const toast = document.getElementById('toast');

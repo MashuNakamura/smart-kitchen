@@ -155,14 +155,14 @@ def get_user_history(user_id, search_query=None, start_date=None, end_date=None,
         where_clause = "WHERE user_id = ?"
         params = [user_id]
 
-        if search_query:
-            where_clause += " AND (input_bahan LIKE ? OR resep_text LIKE ?)"
-            params.append(f"%{search_query}%")
-            params.append(f"%{search_query}%")
-
-        if start_date and end_date:
-            where_clause += " AND created_at >= ? AND created_at <= ?"
+        # Cek Start Date saja (Filter "Sejak Tanggal X")
+        if start_date:
+            where_clause += " AND created_at >= ?"
             params.append(f"{start_date} 00:00:00")
+
+        # Cek End Date saja (Filter "Sampai Tanggal Y")
+        if end_date:
+            where_clause += " AND created_at <= ?"
             params.append(f"{end_date} 23:59:59")
 
         # 2. Hitung TOTAL DATA (Tanpa Limit)
@@ -175,7 +175,6 @@ def get_user_history(user_id, search_query=None, start_date=None, end_date=None,
         offset = (page - 1) * per_page
 
         data_query = f"SELECT * FROM history {where_clause} ORDER BY created_at DESC LIMIT ? OFFSET ?"
-        # Kita perlu params baru karena params lama sudah dipakai count_query (tapi isinya sama + limit/offset)
         data_params = params + [per_page, offset]
 
         cursor.execute(data_query, data_params)
