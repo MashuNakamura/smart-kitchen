@@ -5,6 +5,7 @@ flask-limiter
 python-dotenv
 passlib
 bcrypt==4.0.1
+waitress
 
 # --- Data Processing ---
 pandas
