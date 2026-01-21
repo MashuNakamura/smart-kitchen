@@ -32,27 +32,27 @@
 ## TODO List (Should Have Features)
 
 ### 1. Delete History (CRUD Completeness)
-- [ ] Buat endpoint API `DELETE /api/history/<id>`.
-- [ ] Tambahkan tombol "Hapus" (Tong Sampah) di kartu history.
-- [ ] Konfirmasi hapus (SweetAlert/Modal) sebelum eksekusi.
+- [x] Buat endpoint API `DELETE /api/history/<id>`.
+- [x] Tambahkan tombol "Hapus" (Tong Sampah) di kartu history.
+- [x] Konfirmasi hapus (SweetAlert/Modal) sebelum eksekusi.
 
 ### 2. Advanced Filtering (Server-Side Logic)
-- [ ] Filter berdasarkan rentang tanggal (Date Range Picker).
-- [ ] Pencarian teks riwayat (`LIKE %query%`) yang dieksekusi di backend, bukan filter JS biasa.
+- [x] Filter berdasarkan rentang tanggal (Date Range Picker).
+- [x] Pencarian teks riwayat (`LIKE %query%`) yang dieksekusi di backend, bukan filter JS biasa.
 
 ### 3. Server-Side Pagination (Scalability & Performance)
-- [ ] Ubah query database menggunakan `LIMIT` dan `OFFSET`.
-- [ ] Kirim parameter `page` dan `per_page` dari frontend.
-- [ ] Buat UI tombol navigasi halaman (Next, Prev, Page Numbers).
+- [x] Ubah query database menggunakan `LIMIT` dan `OFFSET`.
+- [x] Kirim parameter `page` dan `per_page` dari frontend.
+- [x] Buat UI tombol navigasi halaman (Next, Prev, Page Numbers).
 
 ### 4. Edit Profil & Security (User Management)
-- [ ] Halaman pengaturan profil user.
-- [ ] Fitur ganti Username.
-- [ ] Fitur ganti Password (dengan validasi password lama & hashing password baru).
+- [x] Halaman pengaturan profil user.
+- [x] Fitur ganti Username.
+- [x] Fitur ganti Password (dengan validasi password lama & hashing password baru).
 
 ## Optional Features (Nice to Have)
 
 ### 5. Ekspor Resep
-- [ ] Integrasi library JS (`html2canvas` atau `jspdf`).
-- [ ] Tombol "Simpan sebagai Gambar/PDF" di modal detail resep.
-- [ ] Formatting hasil ekspor agar layak cetak.
+- [x] Integrasi library JS (`html2canvas` atau `jspdf`).
+- [x] Tombol "Simpan sebagai Gambar/PDF" di modal detail resep.
+- [x] Formatting hasil ekspor agar layak cetak.

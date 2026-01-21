@@ -42,7 +42,7 @@
                 <a href="/history" class="text-sm font-medium text-gray-500 hover:text-orange-500 transition">Riwayat</a>
 
                 <div class="flex items-center gap-4 border-l pl-4 ml-2 border-gray-200">
-                    <span id="nav-username" class="text-sm font-bold text-gray-800">User</span>
+                    <a href="/profile" id="nav-username" class="text-sm font-bold text-gray-800 hover:text-orange-600 transition">{{ session.get('username', 'User') }}</a>
                     <button onclick="handleLogout()" class="text-gray-400 hover:text-red-500 transition" title="Keluar">
                         <i class="fa-solid fa-right-from-bracket text-xl"></i>
                     </button>
@@ -57,8 +57,9 @@
         <div id="mobile-menu" class="hidden md:hidden border-t border-gray-100 py-4 space-y-3 bg-white">
             <a href="/dashboard" class="block px-2 text-sm font-bold text-orange-600">Dapur AI</a>
             <a href="/history" class="block px-2 text-sm font-medium text-gray-600 hover:text-orange-500">Riwayat Masakan</a>
+            <a href="/profile" class="block px-2 text-sm font-medium text-gray-600 hover:text-orange-500">Pengaturan Profil</a>
             <div class="border-t border-gray-100 pt-3 flex justify-between items-center px-2">
-                <span id="nav-username-mobile" class="text-sm font-bold text-gray-800">User</span>
+                <span id="nav-username-mobile" class="text-sm font-bold text-gray-800">{{ session.get('username', 'User') }}</span>
                 <button onclick="handleLogout()" class="text-sm text-red-500 font-medium flex items-center gap-2">
                     Keluar <i class="fa-solid fa-right-from-bracket"></i>
                 </button>

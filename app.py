@@ -169,7 +169,7 @@ def logout():
 # ==========================================
 @app.route('/api/generate', methods=['POST'])
 @utils.auth_required
-@limiter.limit("1 per 3 minute") # [Limit] Max 1x generate resep per 3 menit
+@limiter.limit("1 per minute") # [Limit] Max 1x generate resep per 3 menit
 def generate_recipe():
     # Get JSON Data from Request
     data, error = utils.data_validate()
@@ -235,18 +235,30 @@ def generate_recipe():
 # ==========================================
 @app.route('/api/history', methods=['GET'])
 @utils.auth_required
+@limiter.exempt
 def get_history():
     try:
         # Ambil User ID dari Session
         user_id = session['user_id']
 
-        history_list = db_utils.get_user_history(user_id)
+        # Ambil parameter dari URL query string
+        search = request.args.get('search', '')
+        start_date = request.args.get('start', '')
+        end_date = request.args.get('end', '')
+
+        # Ambil parameter Pagination
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 6))
+
+        # Panggil fungsi DB baru
+        result = db_utils.get_user_history(user_id, search, start_date, end_date, page, per_page)
 
         return jsonify({
             'error_code': 0,
             'success': True,
             'message': 'User history retrieved successfully.',
-            'data': history_list
+            'data': result['data'],
+            'meta': result['meta'],
         })
     except Exception as e:
         return jsonify({
@@ -309,6 +321,104 @@ def get_favorites():
             'success': False,
             'message': f'Database Error: {str(e)}'
         }), 500
+
+# ==========================================
+# Delete History Item
+# ==========================================
+@app.route('/api/history/<int:history_id>', methods=['DELETE'])
+@utils.auth_required
+def delete_history_item(history_id):
+    try:
+        if history_id:
+            db_utils.delete_history_item(history_id)
+            return jsonify({
+                'error_code': 0,
+                'success': True,
+                'message': 'History item deleted successfully.'
+            })
+        else:
+            return jsonify({
+                'error_code': 16,
+                'success': False,
+                'message': 'History ID is required to delete item.'
+            }), 400
+    except Exception as e:
+        return jsonify({
+            'error_code': 15,
+            'success': False,
+            'message': f'Database Error: {str(e)}'
+        }), 500
+
+# ==========================================
+# 6. Profile Management Routes (User)
+# ==========================================
+@app.route('/profile')
+@utils.auth_required
+def profile_page():
+    return render_template('profile.html')
+
+@app.route('/api/profile/update-username', methods=['POST'])
+@utils.auth_required
+@limiter.limit("5 per minute")
+def update_username_api():
+    # 1. Get Data
+    data, error = utils.data_validate()
+    if error: return error
+    
+    new_username = data.get("new_username")
+    user_id = session.get("user_id")
+
+    if not new_username:
+        return jsonify({'success': False, 'message': 'Username baru diperlukan.'}), 400
+
+    # 2. Update DB
+    success, msg = db_utils.update_username(user_id, new_username)
+
+    if success:
+        session['username'] = new_username # Update session
+        return jsonify({'success': True, 'message': msg})
+    else:
+        return jsonify({'success': False, 'message': msg}), 400
+
+@app.route('/api/profile/update-password', methods=['POST'])
+@utils.auth_required
+@limiter.limit("3 per minute")
+def update_password_api():
+    # 1. Get Data
+    data, error = utils.data_validate()
+    if error: return error
+
+    old_password = data.get("old_password")
+    new_password = data.get("new_password")
+    user_id = session.get("user_id")
+
+    if not old_password or not new_password:
+        return jsonify({'success': False, 'message': 'Semua field harus diisi.'}), 400
+
+    # 2. Validate Password Formatting
+    if not utils.minimum_password(new_password):
+        return jsonify({
+            'success': False,
+            'message': 'Password baru minimal 8 karakter, ada huruf besar, kecil, dan angka.'
+        }), 400
+
+    # 3. Get User Data to Verify Old Password
+    user = db_utils.get_user_by_id(user_id)
+    if not user:
+        return jsonify({'success': False, 'message': 'User tidak ditemukan.'}), 404
+    
+    # 4. Verify Old Password
+    if not pwd_context.verify(old_password, user['password']):
+        return jsonify({'success': False, 'message': 'Password lama salah.'}), 401
+
+    # 5. Hash New Password & Update
+    hashed_new_password = pwd_context.hash(new_password)
+    success, msg = db_utils.update_password(user_id, hashed_new_password)
+
+    if success:
+        return jsonify({'success': True, 'message': msg})
+    else:
+        return jsonify({'success': False, 'message': msg}), 500
 
 # ==========================================
 # Frontend Route
