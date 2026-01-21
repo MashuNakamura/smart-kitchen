@@ -169,7 +169,7 @@ def logout():
 # ==========================================
 @app.route('/api/generate', methods=['POST'])
 @utils.auth_required
-@limiter.limit("1 per 3 minute") # [Limit] Max 1x generate resep per 3 menit
+@limiter.limit("1 per minute") # [Limit] Max 1x generate resep per 3 menit
 def generate_recipe():
     # Get JSON Data from Request
     data, error = utils.data_validate()
@@ -235,18 +235,30 @@ def generate_recipe():
 # ==========================================
 @app.route('/api/history', methods=['GET'])
 @utils.auth_required
+@limiter.exempt
 def get_history():
     try:
         # Ambil User ID dari Session
         user_id = session['user_id']
 
-        history_list = db_utils.get_user_history(user_id)
+        # Ambil parameter dari URL query string
+        search = request.args.get('search', '')
+        start_date = request.args.get('start', '')
+        end_date = request.args.get('end', '')
+
+        # Ambil parameter Pagination
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 6))
+
+        # Panggil fungsi DB baru
+        result = db_utils.get_user_history(user_id, search, start_date, end_date, page, per_page)
 
         return jsonify({
             'error_code': 0,
             'success': True,
             'message': 'User history retrieved successfully.',
-            'data': history_list
+            'data': result['data'],
+            'meta': result['meta'],
         })
     except Exception as e:
         return jsonify({

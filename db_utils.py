@@ -141,7 +141,7 @@ def save_recipe_to_history(user_id, bahan, resep_text):
         print(f"[DB Error] Save History: {e}")
         return None
 
-def get_user_history(user_id):
+def get_user_history(user_id, search_query=None, start_date=None, end_date=None, page=1, per_page=6):
     """
     Tugas: Mengambil daftar riwayat masak user (urut dari yang terbaru).
     """
@@ -150,17 +150,51 @@ def get_user_history(user_id):
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
-        cursor.execute('''
-                       SELECT * FROM history
-                       WHERE user_id = ?
-                       ORDER BY created_at DESC
-                       ''', (user_id,))
+        # 1. Bangun Bagian WHERE (Filter)
+        # Kita pisah ini biar bisa dipakai untuk HITUNG TOTAL dan AMBIL DATA
+        where_clause = "WHERE user_id = ?"
+        params = [user_id]
 
+        if search_query:
+            where_clause += " AND (input_bahan LIKE ? OR resep_text LIKE ?)"
+            params.append(f"%{search_query}%")
+            params.append(f"%{search_query}%")
+
+        if start_date and end_date:
+            where_clause += " AND created_at >= ? AND created_at <= ?"
+            params.append(f"{start_date} 00:00:00")
+            params.append(f"{end_date} 23:59:59")
+
+        # 2. Hitung TOTAL DATA (Tanpa Limit)
+        count_query = f"SELECT COUNT(*) FROM history {where_clause}"
+        cursor.execute(count_query, params)
+        total_items = cursor.fetchone()[0]
+
+        # 3. Ambil DATA HALAMAN INI (Pakai Limit & Offset)
+        # Offset = (Halaman - 1) * Jumlah per halaman
+        offset = (page - 1) * per_page
+
+        data_query = f"SELECT * FROM history {where_clause} ORDER BY created_at DESC LIMIT ? OFFSET ?"
+        # Kita perlu params baru karena params lama sudah dipakai count_query (tapi isinya sama + limit/offset)
+        data_params = params + [per_page, offset]
+
+        cursor.execute(data_query, data_params)
         rows = cursor.fetchall()
         conn.close()
 
-        # Convert list of rows to list of dicts
-        return [dict(row) for row in rows]
+        # Hitung Total Halaman
+        import math
+        total_pages = math.ceil(total_items / per_page)
+
+        return {
+            'data': [dict(row) for row in rows],
+            'meta': {
+                'total_items': total_items,
+                'total_pages': total_pages,
+                'current_page': page,
+                'per_page': per_page
+            }
+        }
 
     except Exception as e:
         print(f"[DB Error] Get History: {e}")

@@ -37,13 +37,13 @@
 - [x] Konfirmasi hapus (SweetAlert/Modal) sebelum eksekusi.
 
 ### 2. Advanced Filtering (Server-Side Logic)
-- [ ] Filter berdasarkan rentang tanggal (Date Range Picker).
-- [ ] Pencarian teks riwayat (`LIKE %query%`) yang dieksekusi di backend, bukan filter JS biasa.
+- [x] Filter berdasarkan rentang tanggal (Date Range Picker).
+- [x] Pencarian teks riwayat (`LIKE %query%`) yang dieksekusi di backend, bukan filter JS biasa.
 
 ### 3. Server-Side Pagination (Scalability & Performance)
-- [ ] Ubah query database menggunakan `LIMIT` dan `OFFSET`.
-- [ ] Kirim parameter `page` dan `per_page` dari frontend.
-- [ ] Buat UI tombol navigasi halaman (Next, Prev, Page Numbers).
+- [x] Ubah query database menggunakan `LIMIT` dan `OFFSET`.
+- [x] Kirim parameter `page` dan `per_page` dari frontend.
+- [x] Buat UI tombol navigasi halaman (Next, Prev, Page Numbers).
 
 ### 4. Edit Profil & Security (User Management)
 - [x] Halaman pengaturan profil user.
