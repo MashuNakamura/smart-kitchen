@@ -434,7 +434,8 @@ def view_register():
     # Redirect to dashboard if already logged in
     if 'user_id' in session:
         return redirect(url_for('view_dashboard'))
-    return render_template('register.html')
+    # return render_template('register.html')
+    return render_template('login.html')
 
 @app.route('/login')
 def view_login():
