@@ -10,7 +10,22 @@ You can download the models from the following [Link Models](https://drive.googl
 
 After downloading, extract the contents of the zip file into the models/ folder.
 
-Don't forget to create some sub-folders for db/ in the root directory to store the database files, because we are using SQLite for this project (serverless database).
+Also download the Models by following this command:
+
+```bash
+mkdir -p ~/smart-kitchen/models/base_model
+cd ~/smart-kitchen/models/base_model
+
+wget "https://huggingface.co/Qwen/Qwen2-1.5B-Instruct/resolve/main/config.json" -O config.json
+wget "https://huggingface.co/Qwen/Qwen2-1.5B-Instruct/resolve/main/generation_config.json" -O generation_config.json
+wget "https://huggingface.co/Qwen/Qwen2-1.5B-Instruct/resolve/main/tokenizer_config.json" -O tokenizer_config.json
+wget "https://huggingface.co/Qwen/Qwen2-1.5B-Instruct/resolve/main/tokenizer.json" -O tokenizer.json
+wget "https://huggingface.co/Qwen/Qwen2-1.5B-Instruct/resolve/main/vocab.json" -O vocab.json
+wget "https://huggingface.co/Qwen/Qwen2-1.5B-Instruct/resolve/main/merges.txt" -O merges.txt
+wget -c "https://huggingface.co/Qwen/Qwen2-1.5B-Instruct/resolve/main/model.safetensors" -O model.safetensors
+```
+
+Don't forget to create some sub-folders for **db/** in the root directory to store the database files, because we are using SQLite for this project (serverless database).
 
 ## Installing Required Packages
 
