@@ -1,4 +1,8 @@
+# ==========================================
+# IMPORT MODULES
+# ==========================================
 import os
+import math
 from flask import Flask, jsonify, request, render_template, session, redirect, url_for
 from flask_cors import CORS
 from passlib.context import CryptContext
@@ -58,7 +62,7 @@ except Exception as e:
     print(f"[APP] Failed to Start the Server: {e}")
 
 # ==========================================
-# AUTH ROUTES (Login & Register)
+# AUTH ROUTES (Login & Register & Logout)
 # ==========================================
 @app.route('/api/register', methods=['POST'])
 @limiter.limit("5 per minute") # [Limit] Max 5x coba register per menit
@@ -252,7 +256,6 @@ def get_history():
 
         # Panggil fungsi DB baru
         result = db_utils.get_user_history(user_id, search, start_date, end_date, page, per_page)
-
         return jsonify({
             'error_code': 0,
             'success': True,
@@ -304,16 +307,28 @@ def add_favorite():
 
 @app.route('/api/favorites', methods=['GET']) # List Favorites
 @utils.auth_required
+@limiter.exempt
 def get_favorites():
-    # Get User ID from Session
-    user_id = session['user_id']
     try:
-        fav_list = db_utils.get_user_favorites(user_id)
+        # Get User ID from Session
+        user_id = session['user_id']
+
+        # Ambil parameter dari URL query string
+        search = request.args.get('search', '')
+        start_date = request.args.get('start', '')
+        end_date = request.args.get('end', '')
+
+        # Ambil parameter Pagination
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 6))
+
+        fav_list = db_utils.get_user_favorites(user_id, search, start_date, end_date, page, per_page)
         return jsonify({
             'error_code': 0,
             'success': True,
             'message': 'Favorites retrieved successfully.',
-            'data': fav_list
+            'data': fav_list['data'],
+            'meta': fav_list['meta']
         })
     except Exception as e:
         return jsonify({
@@ -463,4 +478,4 @@ def view_history_page():
 # ==========================================
 if __name__ == '__main__':
     print("Server is running on http://localhost:5000")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=False)

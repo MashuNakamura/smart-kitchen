@@ -1,5 +1,9 @@
+# ==========================================
+# Import Modules
+# ==========================================
 import os
 import sqlite3
+import math
 
 # ==========================================
 # Database Configuration
@@ -151,9 +155,12 @@ def get_user_history(user_id, search_query=None, start_date=None, end_date=None,
         cursor = conn.cursor()
 
         # 1. Bangun Bagian WHERE (Filter)
-        # Kita pisah ini biar bisa dipakai untuk HITUNG TOTAL dan AMBIL DATA
         where_clause = "WHERE user_id = ?"
         params = [user_id]
+
+        if search_query:
+            where_clause += " AND (input_bahan LIKE ? OR resep_text LIKE ?)"
+            params.extend([f"%{search_query}%", f"%{search_query}%"])
 
         # Cek Start Date saja (Filter "Sejak Tanggal X")
         if start_date:
@@ -182,7 +189,6 @@ def get_user_history(user_id, search_query=None, start_date=None, end_date=None,
         conn.close()
 
         # Hitung Total Halaman
-        import math
         total_pages = math.ceil(total_items / per_page)
 
         return {
@@ -197,7 +203,7 @@ def get_user_history(user_id, search_query=None, start_date=None, end_date=None,
 
     except Exception as e:
         print(f"[DB Error] Get History: {e}")
-        return []
+        return {'data': [], 'meta': {'total_items': 0, 'total_pages': 0, 'current_page': 1, 'per_page': 6}}
 
 # ==========================================
 # 4. Optional Features (Favorites)
@@ -236,7 +242,7 @@ def toggle_favorite(history_id):
         print(f"[DB Error] Toggle Favorite: {e}")
         return False
 
-def get_user_favorites(user_id):
+def get_user_favorites(user_id, search_query=None, start_date=None, end_date=None, page=1, per_page=6):
     """
     Tugas: Mengambil history yang dilike saja (is_favorite = 1).
     """
@@ -245,20 +251,56 @@ def get_user_favorites(user_id):
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
-        cursor.execute('''
-                       SELECT * FROM history
-                       WHERE user_id = ? AND is_favorite = 1
-                       ORDER BY created_at DESC
-                       ''', (user_id,))
+        # Create some Main Filter
+        where_clause = "WHERE user_id = ? AND is_favorite = 1"
+        params = [user_id]
 
+        if search_query:
+            where_clause += " AND (input_bahan LIKE ? OR resep_text LIKE ?)"
+            params.extend([f"%{search_query}%", f"%{search_query}%"])
+
+        # Cek Start Date saja (Filter "Sejak Tanggal X")
+        if start_date:
+            where_clause += " AND created_at >= ?"
+            params.append(f"{start_date} 00:00:00")
+
+        # Cek End Date saja (Filter "Sampai Tanggal Y")
+        if end_date:
+            where_clause += " AND created_at <= ?"
+            params.append(f"{end_date} 23:59:59")
+
+        # 2. Hitung TOTAL DATA (Tanpa Limit)
+        count_query = f"SELECT COUNT(*) FROM history {where_clause}"
+        cursor.execute(count_query, params)
+        total_items = cursor.fetchone()[0]
+
+        # 3. Ambil DATA HALAMAN INI (Pakai Limit & Offset)
+        # Offset = (Halaman - 1) * Jumlah per halaman
+        offset = (page - 1) * per_page
+
+        data_query = f"SELECT * FROM history {where_clause} ORDER BY created_at DESC LIMIT ? OFFSET ?"
+        data_params = params + [per_page, offset]
+
+        cursor.execute(data_query, data_params)
         rows = cursor.fetchall()
         conn.close()
 
-        return [dict(row) for row in rows]
+        # Hitung Total Halaman
+        total_pages = math.ceil(total_items / per_page)
+
+        return {
+            'data': [dict(row) for row in rows],
+            'meta': {
+                'total_items': total_items,
+                'total_pages': total_pages,
+                'current_page': page,
+                'per_page': per_page
+            }
+        }
 
     except Exception as e:
         print(f"[DB Error] Get Favorites: {e}")
-        return []
+        return {'data': [], 'meta': {'total_items': 0, 'total_pages': 0, 'current_page': 1, 'per_page': 6}}
 
 # ==========================================
 # 5. Delete History Entry
