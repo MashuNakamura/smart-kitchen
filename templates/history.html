@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,285 +15,352 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .custom-scroll::-webkit-scrollbar { width: 6px; }
-        .custom-scroll::-webkit-scrollbar-track { background: #f9fafb; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
-        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #f9fafb;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 10px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
     </style>
 </head>
 
 <body class="bg-gray-50 text-gray-800 h-screen flex flex-col overflow-hidden">
 
-<div id="delete-modal" class="fixed inset-0 z-[60] hidden">
-    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeDeleteModal()"></div>
-    <div class="absolute inset-0 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-            <div class="p-6 text-center">
-                <div class="mx-auto mb-4 w-14 h-14 flex items-center justify-center rounded-full bg-red-100">
-                    <i class="fa-solid fa-trash text-red-500 text-2xl"></i>
-                </div>
-                <h3 class="text-lg font-bold text-gray-800 mb-2">Hapus Riwayat?</h3>
-                <p class="text-sm text-gray-500 mb-6">Resep yang dihapus tidak dapat dikembalikan.</p>
-                <div class="flex gap-3">
-                    <button onclick="closeDeleteModal()" class="flex-1 py-2.5 rounded-lg border border-gray-300 text-gray-600 font-medium hover:bg-gray-100 transition">Batal</button>
-                    <button id="confirm-delete-btn" class="flex-1 py-2.5 rounded-lg bg-red-500 text-white font-bold hover:bg-red-600 transition">Ya, Hapus</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="logout-modal" class="fixed inset-0 z-[100] hidden">
-    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeLogoutModal()"></div>
-    <div class="absolute inset-0 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-            <div class="p-6 text-center">
-                <div class="mx-auto mb-4 w-14 h-14 flex items-center justify-center rounded-full bg-red-100">
-                    <i class="fa-solid fa-right-from-bracket text-red-500 text-2xl"></i>
-                </div>
-                <h3 class="text-lg font-bold text-gray-800 mb-2">Ingin Keluar?</h3>
-                <p class="text-sm text-gray-500 mb-6">
-                    Anda harus masuk kembali untuk mengakses Dapur AI. Apakah Anda yakin?
-                </p>
-                <div class="flex gap-3">
-                    <button onclick="closeLogoutModal()" class="flex-1 py-2.5 rounded-lg border border-gray-300 text-gray-600 font-medium hover:bg-gray-100 transition">Batal</button>
-                    <button onclick="performLogout()" class="flex-1 py-2.5 rounded-lg bg-red-500 text-white font-bold hover:bg-red-600 transition">Ya, Keluar</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<nav class="bg-white shadow-sm z-50 flex-none">
-    <div class="container mx-auto px-4">
-        <div class="flex justify-between items-center py-3">
-            <a href="/" class="flex items-center gap-2">
-                <i class="fa-solid fa-kitchen-set text-orange-500 text-2xl"></i>
-                <span class="text-xl font-bold tracking-tight text-gray-800">Smart<span class="text-orange-500">Kitchen</span></span>
-            </a>
-            <div class="hidden md:flex items-center gap-6">
-                <a href="/dashboard" class="text-sm font-medium text-gray-500 hover:text-orange-500 transition">Dapur AI</a>
-                <a href="/history" class="text-sm font-bold text-orange-600 border-b-2 border-orange-500 pb-0.5">Riwayat</a>
-                <div class="flex items-center gap-4 border-l pl-4 ml-2 border-gray-200">
-                    <a href="/profile" id="nav-username" class="text-sm font-bold text-gray-800 hover:text-orange-600 transition">{{ session.get('username', 'User') }}</a>
-                    <button onclick="confirmLogout()" class="text-gray-400 hover:text-red-500 transition" title="Keluar"><i class="fa-solid fa-right-from-bracket text-xl"></i></button>
-                </div>
-            </div>
-            <button onclick="toggleMobileMenu()" class="md:hidden text-gray-500 hover:text-orange-500 focus:outline-none"><i class="fa-solid fa-bars text-2xl"></i></button>
-        </div>
-        <div id="mobile-menu" class="hidden md:hidden border-t border-gray-100 py-4 space-y-3 bg-white">
-            <a href="/dashboard" class="block px-2 text-sm font-medium text-gray-600 hover:text-orange-500">Dapur AI</a>
-            <a href="/history" class="block px-2 text-sm font-bold text-orange-600">Riwayat Masakan</a>
-            <a href="/profile" class="block px-2 text-sm font-medium text-gray-600 hover:text-orange-500">Pengaturan Profil</a>
-            <div class="border-t border-gray-100 pt-3 flex justify-between items-center px-2">
-                <span id="nav-username-mobile" class="text-sm font-bold text-gray-800">{{ session.get('username', 'User') }}</span>
-                <button onclick="confirmLogout()" class="text-sm text-red-500 font-medium flex items-center gap-2">Keluar <i class="fa-solid fa-right-from-bracket"></i></button>
-            </div>
-        </div>
-    </div>
-</nav>
-
-<main class="flex-grow flex flex-col container mx-auto px-4 pt-6 max-w-6xl overflow-hidden h-full">
-
-    <div class="flex-none space-y-4 pb-4 border-b border-gray-200 mb-4">
-        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-            <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                <i class="fa-solid fa-clock-rotate-left text-orange-500"></i> Riwayat Masakan
-            </h1>
-            <div class="bg-white p-1 rounded-lg border shadow-sm flex w-full md:w-auto">
-                <button onclick="setFilter('all')" id="tab-all" class="flex-1 md:flex-none px-6 py-2 text-sm font-medium rounded-md bg-orange-100 text-orange-700 transition">Semua</button>
-                <button onclick="setFilter('fav')" id="tab-fav" class="flex-1 md:flex-none px-6 py-2 text-sm font-medium rounded-md text-gray-500 hover:text-orange-600 transition">
-                    <i class="fa-solid fa-heart text-red-500 mr-1"></i> Favorit
-                </button>
-            </div>
-        </div>
-
-        <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="relative">
-                    <input type="text" id="search-history" onkeyup="resetPageAndLoad()"
-                           class="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none text-sm bg-gray-50 transition"
-                           placeholder="Cari bahan...">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-gray-400"></i>
-                </div>
-                <div class="md:col-span-2 flex flex-wrap items-center gap-3">
-                    <div class="flex items-center gap-2 bg-gray-50 border rounded-lg px-3 py-1.5">
-                        <i class="fa-regular fa-calendar text-gray-400 text-sm"></i>
-                        <input type="date" id="start-date" onchange="resetPageAndLoad()" class="bg-transparent text-sm outline-none p-0 text-gray-600">
-                        <span class="text-gray-300">s/d</span>
-                        <input type="date" id="end-date" onchange="resetPageAndLoad()" class="bg-transparent text-sm outline-none p-0 text-gray-600">
+    <div id="delete-modal" class="fixed inset-0 z-[60] hidden">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeDeleteModal()"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+                <div class="p-6 text-center">
+                    <div class="mx-auto mb-4 w-14 h-14 flex items-center justify-center rounded-full bg-red-100">
+                        <i class="fa-solid fa-trash text-red-500 text-2xl"></i>
                     </div>
-                    <button onclick="resetFilters()" class="text-xs text-orange-600 font-bold hover:bg-orange-50 px-3 py-2 rounded-lg transition">Reset</button>
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">Hapus Riwayat?</h3>
+                    <p class="text-sm text-gray-500 mb-6">Resep yang dihapus tidak dapat dikembalikan.</p>
+                    <div class="flex gap-3">
+                        <button onclick="closeDeleteModal()"
+                            class="flex-1 py-2.5 rounded-lg border border-gray-300 text-gray-600 font-medium hover:bg-gray-100 transition">Batal</button>
+                        <button id="confirm-delete-btn"
+                            class="flex-1 py-2.5 rounded-lg bg-red-500 text-white font-bold hover:bg-red-600 transition">Ya,
+                            Hapus</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="history-scroll-area" class="flex-grow overflow-y-auto custom-scroll pb-24 pr-2 relative">
-        <div id="loading" class="text-center py-20 hidden">
-            <i class="fa-solid fa-circle-notch fa-spin text-4xl text-orange-300"></i>
-            <p class="text-gray-400 mt-2 text-sm font-medium">Memproses data...</p>
-        </div>
-        <div id="empty-state" class="hidden text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
-            <i class="fa-solid fa-magnifying-glass text-6xl text-gray-100 mb-4"></i>
-            <p class="text-gray-500 font-medium text-lg">Tidak ada riwayat ditemukan.</p>
-            <button onclick="resetFilters()" class="text-orange-500 font-bold mt-4 hover:underline">Lihat Semua</button>
-        </div>
-        <div id="history-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-    </div>
-
-    <div id="pagination-controls" class="fixed bottom-6 left-0 right-0 flex justify-center items-center gap-4 z-40 hidden pointer-events-none">
-        <div class="bg-white/90 backdrop-blur-md border border-gray-200 shadow-xl rounded-2xl p-2 flex items-center gap-4 pointer-events-auto">
-            <button id="btn-prev" onclick="changePage(-1)"
-                    class="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-600 disabled:opacity-40 disabled:cursor-not-allowed transition shadow-sm">
-                <i class="fa-solid fa-chevron-left"></i>
-            </button>
-            <span id="page-info" class="text-xs font-bold text-gray-700 tabular-nums min-w-[80px] text-center">Hal 1 dari 1</span>
-            <button id="btn-next" onclick="changePage(1)"
-                    class="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-600 disabled:opacity-40 disabled:cursor-not-allowed transition shadow-sm">
-                <i class="fa-solid fa-chevron-right"></i>
-            </button>
+    <div id="logout-modal" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeLogoutModal()"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+                <div class="p-6 text-center">
+                    <div class="mx-auto mb-4 w-14 h-14 flex items-center justify-center rounded-full bg-red-100">
+                        <i class="fa-solid fa-right-from-bracket text-red-500 text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">Ingin Keluar?</h3>
+                    <p class="text-sm text-gray-500 mb-6">Anda harus masuk kembali untuk mengakses Dapur AI.</p>
+                    <div class="flex gap-3">
+                        <button onclick="closeLogoutModal()"
+                            class="flex-1 py-2.5 rounded-lg border border-gray-300 text-gray-600 font-medium hover:bg-gray-100 transition">Batal</button>
+                        <button onclick="performLogout()"
+                            class="flex-1 py-2.5 rounded-lg bg-red-500 text-white font-bold hover:bg-red-600 transition">Ya,
+                            Keluar</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</main>
 
-<div id="recipe-modal" class="fixed inset-0 z-[70] hidden">
-    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
-    <div class="absolute inset-0 flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
-            <div class="px-6 py-4 border-b flex justify-between items-start gap-4 bg-gray-50 shrink-0">
-                <h3 class="font-bold text-lg text-gray-800 flex items-start gap-2 flex-1 min-w-0">
-                    <i class="fa-solid fa-utensils text-orange-500 mt-1 shrink-0"></i>
-                    <span id="modal-title" class="break-words leading-snug">
-                        Detail Resep
-                    </span>
-                </h3>
-                <div class="flex items-center gap-2 shrink-0 ml-2">
-                    <button onclick="downloadPDF()" class="group text-xs sm:text-sm bg-white border border-gray-300 text-gray-700 px-3 py-2 rounded-lg hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 transition shadow-sm flex items-center gap-2 whitespace-nowrap">
-                        <i class="fa-solid fa-file-pdf text-red-500 group-hover:scale-110 transition-transform"></i>
-                        <span>Simpan PDF</span>
-                    </button>
-                    <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-200 rounded-lg transition">
-                        <i class="fa-solid fa-xmark text-xl"></i>
+    <nav class="bg-white shadow-sm z-50 flex-none">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-3">
+                <a href="/" class="flex items-center gap-2">
+                    <i class="fa-solid fa-kitchen-set text-orange-500 text-2xl"></i>
+                    <span class="text-xl font-bold tracking-tight text-gray-800">Smart<span
+                            class="text-orange-500">Kitchen</span></span>
+                </a>
+                <div class="hidden md:flex items-center gap-6">
+                    <a href="/dashboard"
+                        class="text-sm font-medium text-gray-500 hover:text-orange-500 transition">Dapur AI</a>
+                    <a href="/history"
+                        class="text-sm font-bold text-orange-600 border-b-2 border-orange-500 pb-0.5">Riwayat</a>
+                    <div class="flex items-center gap-4 border-l pl-4 ml-2 border-gray-200">
+                        <a href="/profile" id="nav-username"
+                            class="text-sm font-bold text-gray-800 hover:text-orange-600 transition">{{
+                            session.get('username', 'User') }}</a>
+                        <button onclick="confirmLogout()" class="text-gray-400 hover:text-red-500 transition"
+                            title="Keluar"><i class="fa-solid fa-right-from-bracket text-xl"></i></button>
+                    </div>
+                </div>
+                <button onclick="toggleMobileMenu()"
+                    class="md:hidden text-gray-500 hover:text-orange-500 focus:outline-none"><i
+                        class="fa-solid fa-bars text-2xl"></i></button>
+            </div>
+            <div id="mobile-menu" class="hidden md:hidden border-t border-gray-100 py-4 space-y-3 bg-white">
+                <a href="/dashboard" class="block px-2 text-sm font-medium text-gray-600 hover:text-orange-500">Dapur
+                    AI</a>
+                <a href="/history" class="block px-2 text-sm font-bold text-orange-600">Riwayat Masakan</a>
+                <a href="/profile" class="block px-2 text-sm font-medium text-gray-600 hover:text-orange-500">Pengaturan
+                    Profil</a>
+                <div class="border-t border-gray-100 pt-3 flex justify-between items-center px-2">
+                    <span id="nav-username-mobile" class="text-sm font-bold text-gray-800">{{ session.get('username',
+                        'User') }}</span>
+                    <button onclick="confirmLogout()"
+                        class="text-sm text-red-500 font-medium flex items-center gap-2">Keluar <i
+                            class="fa-solid fa-right-from-bracket"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow flex flex-col container mx-auto px-4 pt-6 max-w-6xl overflow-hidden h-full">
+
+        <div class="flex-none space-y-4 pb-4 border-b border-gray-200 mb-4">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left text-orange-500"></i> Riwayat Masakan
+                </h1>
+                <div class="bg-white p-1 rounded-lg border shadow-sm flex w-full md:w-auto">
+                    <button onclick="setFilter('all')" id="tab-all"
+                        class="flex-1 md:flex-none px-6 py-2 text-sm font-medium rounded-md bg-orange-100 text-orange-700 transition">Semua</button>
+                    <button onclick="setFilter('fav')" id="tab-fav"
+                        class="flex-1 md:flex-none px-6 py-2 text-sm font-medium rounded-md text-gray-500 hover:text-orange-600 transition">
+                        <i class="fa-solid fa-heart text-red-500 mr-1"></i> Favorit
                     </button>
                 </div>
             </div>
-            <div id="modal-content-wrapper" class="p-8 overflow-y-auto custom-scroll bg-white">
-                <div id="modal-content" class="prose prose-orange max-w-none text-gray-700 text-sm leading-relaxed"></div>
+
+            <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                    <div class="relative">
+                        <input type="text" id="search-history" onkeyup="resetPageAndLoad()"
+                            class="w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none text-sm bg-gray-50 transition"
+                            placeholder="Cari bahan...">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-3.5 text-gray-400"></i>
+                    </div>
+
+                    <div class="md:col-span-2 flex flex-col md:flex-row gap-3">
+
+                        <div
+                            class="flex flex-col md:flex-row md:items-center bg-gray-50 border rounded-lg p-3 w-full md:w-auto gap-2 md:gap-0">
+
+                            <div class="flex items-center gap-3 w-full md:w-auto">
+                                <i class="fa-regular fa-calendar text-gray-400 text-sm"></i>
+                                <div class="flex flex-col w-full">
+                                    <span class="text-[10px] text-gray-400 font-bold uppercase md:hidden">Dari
+                                        Tanggal</span>
+                                    <input type="date" id="start-date" onchange="resetPageAndLoad()"
+                                        class="bg-transparent text-sm w-full outline-none text-gray-600 p-0 cursor-pointer">
+                                </div>
+                            </div>
+
+                            <div class="relative py-2 md:py-0 md:px-4 text-center">
+                                <div class="absolute inset-0 flex items-center md:hidden">
+                                    <div class="w-full border-t border-gray-200"></div>
+                                </div>
+                                <div class="relative bg-gray-50 px-2 text-xs text-gray-400 font-medium hidden md:block">
+                                    s/d</div>
+                            </div>
+
+                            <div class="flex items-center gap-3 w-full md:w-auto">
+                                <i class="fa-regular fa-calendar text-gray-400 text-sm md:hidden"></i>
+                                <div class="flex flex-col w-full">
+                                    <span class="text-[10px] text-gray-400 font-bold uppercase md:hidden">Sampai
+                                        Tanggal</span>
+                                    <input type="date" id="end-date" onchange="resetPageAndLoad()"
+                                        class="bg-transparent text-sm w-full outline-none text-gray-600 p-0 cursor-pointer">
+                                </div>
+                            </div>
+                        </div>
+
+                        <button onclick="resetFilters()"
+                            class="text-xs text-orange-600 font-bold bg-orange-50 hover:bg-orange-100 border border-orange-200 px-4 py-3 md:py-2 rounded-lg transition w-full md:w-auto text-center shrink-0">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="history-scroll-area" class="flex-grow overflow-y-auto custom-scroll pb-24 pr-2 relative">
+            <div id="loading" class="text-center py-20 hidden">
+                <i class="fa-solid fa-circle-notch fa-spin text-4xl text-orange-300"></i>
+                <p class="text-gray-400 mt-2 text-sm font-medium">Memproses data...</p>
+            </div>
+            <div id="empty-state"
+                class="hidden text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
+                <i class="fa-solid fa-magnifying-glass text-6xl text-gray-100 mb-4"></i>
+                <p class="text-gray-500 font-medium text-lg">Tidak ada riwayat ditemukan.</p>
+                <button onclick="resetFilters()" class="text-orange-500 font-bold mt-4 hover:underline">Lihat
+                    Semua</button>
+            </div>
+            <div id="history-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </div>
+
+        <div id="pagination-controls"
+            class="fixed bottom-6 left-0 right-0 flex justify-center items-center gap-4 z-40 hidden pointer-events-none">
+            <div
+                class="bg-white/90 backdrop-blur-md border border-gray-200 shadow-xl rounded-2xl p-2 flex items-center gap-4 pointer-events-auto">
+                <button id="btn-prev" onclick="changePage(-1)"
+                    class="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-600 disabled:opacity-40 disabled:cursor-not-allowed transition shadow-sm"><i
+                        class="fa-solid fa-chevron-left"></i></button>
+                <span id="page-info" class="text-xs font-bold text-gray-700 tabular-nums min-w-[80px] text-center">Hal 1
+                    dari 1</span>
+                <button id="btn-next" onclick="changePage(1)"
+                    class="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl text-gray-600 hover:bg-orange-50 hover:text-orange-600 disabled:opacity-40 disabled:cursor-not-allowed transition shadow-sm"><i
+                        class="fa-solid fa-chevron-right"></i></button>
+            </div>
+        </div>
+    </main>
+
+    <div id="recipe-modal" class="fixed inset-0 z-[70] hidden">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
+                <div class="px-6 py-4 border-b flex justify-between items-start gap-4 bg-gray-50 shrink-0">
+                    <h3 class="font-bold text-lg text-gray-800 flex items-start gap-2 flex-1 min-w-0">
+                        <i class="fa-solid fa-utensils text-orange-500 mt-1 shrink-0"></i>
+                        <span id="modal-title" class="break-words leading-snug">Detail Resep</span>
+                    </h3>
+                    <div class="flex items-center gap-2 shrink-0 ml-2">
+                        <button onclick="downloadPDF()"
+                            class="group text-xs sm:text-sm bg-white border border-gray-300 text-gray-700 px-3 py-2 rounded-lg hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 transition shadow-sm flex items-center gap-2 whitespace-nowrap">
+                            <i class="fa-solid fa-file-pdf text-red-500 group-hover:scale-110 transition-transform"></i>
+                            <span>Simpan PDF</span>
+                        </button>
+                        <button onclick="closeModal()"
+                            class="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-200 rounded-lg transition"><i
+                                class="fa-solid fa-xmark text-xl"></i></button>
+                    </div>
+                </div>
+                <div id="modal-content-wrapper" class="p-8 overflow-y-auto custom-scroll bg-white">
+                    <div id="modal-content" class="prose prose-orange max-w-none text-gray-700 text-sm leading-relaxed">
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<div id="toast" class="fixed top-20 right-5 z-[80] transform translate-x-full transition-transform duration-300 pointer-events-none">
-    <div id="toast-content" class="px-6 py-4 rounded-xl shadow-xl text-white font-medium flex items-center gap-3 pointer-events-auto"></div>
-</div>
+    <div id="toast"
+        class="fixed top-20 right-5 z-[80] transform translate-x-full transition-transform duration-300 pointer-events-none">
+        <div id="toast-content"
+            class="px-6 py-4 rounded-xl shadow-xl text-white font-medium flex items-center gap-3 pointer-events-auto">
+        </div>
+    </div>
 
-<script>
-    let allHistory = [];
-    let currentFilter = 'all';
-    let deleteTargetId = null;
-    let currentPage = 1;
-    let totalPages = 1;
-    let currentRecipeTitle = "";
+    <script>
+        let allHistory = [];
+        let currentFilter = 'all';
+        let deleteTargetId = null;
+        let currentPage = 1;
+        let totalPages = 1;
+        let currentRecipeTitle = "";
 
-    document.addEventListener('DOMContentLoaded', () => {
-        const user = sessionStorage.getItem('username');
-        if(user) {
-            document.getElementById('nav-username').innerText = user;
-            document.getElementById('nav-username-mobile').innerText = user;
-        }
-        loadHistory();
-    });
-
-    // --- LOGOUT LOGIC (WITH MODAL) ---
-    function confirmLogout() {
-        document.getElementById('logout-modal').classList.remove('hidden');
-    }
-
-    function closeLogoutModal() {
-        document.getElementById('logout-modal').classList.add('hidden');
-    }
-
-    async function performLogout() {
-        await fetch('/api/logout');
-        sessionStorage.clear();
-        window.location.href = '/login';
-    }
-
-    function toggleMobileMenu() { document.getElementById('mobile-menu').classList.toggle('hidden'); }
-    function resetPageAndLoad() { currentPage = 1; loadHistory(); }
-
-    async function loadHistory() {
-        const loading = document.getElementById('loading');
-        const grid = document.getElementById('history-grid');
-        const empty = document.getElementById('empty-state');
-        const pagination = document.getElementById('pagination-controls');
-
-        loading.classList.remove('hidden');
-        grid.innerHTML = '';
-        empty.classList.add('hidden');
-        pagination.classList.add('hidden');
-
-        const search = document.getElementById('search-history').value;
-        const start = document.getElementById('start-date').value;
-        const end = document.getElementById('end-date').value;
-
-        let url = `/api/history?page=${currentPage}&per_page=6&search=${encodeURIComponent(search)}&start=${start}&end=${end}`;
-
-        try {
-            const res = await fetch(url);
-            const json = await res.json();
-            if(json.success) {
-                allHistory = json.data;
-                totalPages = json.meta.total_pages;
-                document.getElementById('page-info').innerText = `Hal ${json.meta.current_page} dari ${totalPages || 1}`;
-                document.getElementById('btn-prev').disabled = (currentPage <= 1);
-                document.getElementById('btn-next').disabled = (currentPage >= totalPages);
-                if (allHistory.length > 0) pagination.classList.remove('hidden');
-                renderGrid();
-            } else {
-                if(res.status === 401) window.location.href = '/login';
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = sessionStorage.getItem('username');
+            if (user) {
+                document.getElementById('nav-username').innerText = user;
+                const mobileNav = document.getElementById('nav-username-mobile');
+                if (mobileNav) mobileNav.innerText = user;
             }
-        } catch(e) { console.error(e); }
-        finally { loading.classList.add('hidden'); }
-    }
-
-    function changePage(delta) {
-        const newPage = currentPage + delta;
-        if (newPage > 0 && newPage <= totalPages) {
-            currentPage = newPage;
             loadHistory();
-            document.getElementById('history-scroll-area').scrollTop = 0;
-        }
-    }
+        });
 
-    function setFilter(type) {
-        currentFilter = type;
-        document.getElementById('tab-all').className = type === 'all' ? "flex-1 md:flex-none px-6 py-2 text-sm font-medium rounded-md bg-orange-100 text-orange-700 transition shadow-sm" : "flex-1 md:flex-none px-6 py-2 text-sm font-medium rounded-md text-gray-500 hover:text-orange-600 transition";
-        document.getElementById('tab-fav').className = type === 'fav' ? "flex-1 md:flex-none px-6 py-2 text-sm font-medium rounded-md bg-red-50 text-red-600 transition shadow-sm" : "flex-1 md:flex-none px-6 py-2 text-sm font-medium rounded-md text-gray-500 hover:text-orange-600 transition";
-        renderGrid();
-    }
-
-    function renderGrid() {
-        const container = document.getElementById('history-grid');
-        const empty = document.getElementById('empty-state');
-        container.innerHTML = '';
-        const data = currentFilter === 'fav' ? allHistory.filter(item => item.is_favorite == 1) : allHistory;
-
-        if(data.length === 0) {
-            if(currentPage === 1 && currentFilter === 'all') empty.classList.remove('hidden');
-            return;
+        function confirmLogout() { document.getElementById('logout-modal').classList.remove('hidden'); }
+        function closeLogoutModal() { document.getElementById('logout-modal').classList.add('hidden'); }
+        async function performLogout() {
+            await fetch('/api/logout');
+            sessionStorage.clear();
+            window.location.href = '/login';
         }
 
-        data.forEach(item => {
-            const card = document.createElement('div');
-            card.className = "bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition group flex flex-col h-full";
-            const snippet = (item.resep_text || "").replace(/\*/g, '').substring(0, 100) + "...";
-            const bahan = item.input_bahan || "Tanpa Bahan";
+        function toggleMobileMenu() { document.getElementById('mobile-menu').classList.toggle('hidden'); }
+        function resetPageAndLoad() { currentPage = 1; loadHistory(); }
 
-            card.innerHTML = `
+        async function loadHistory() {
+            const loading = document.getElementById('loading');
+            const grid = document.getElementById('history-grid');
+            const empty = document.getElementById('empty-state');
+            const pagination = document.getElementById('pagination-controls');
+
+            const search = document.getElementById('search-history').value;
+            const start = document.getElementById('start-date').value;
+            const end = document.getElementById('end-date').value;
+
+            loading.classList.remove('hidden');
+            grid.innerHTML = '';
+            empty.classList.add('hidden');
+            pagination.classList.add('hidden');
+
+            let endpoint = currentFilter === 'fav' ? '/api/favorites' : '/api/history';
+            let url = `${endpoint}?page=${currentPage}&per_page=6&search=${encodeURIComponent(search)}&start=${start}&end=${end}`;
+
+            try {
+                const res = await fetch(url);
+                const json = await res.json();
+                if (json.success) {
+                    allHistory = json.data;
+                    totalPages = json.meta.total_pages;
+                    document.getElementById('page-info').innerText = `Hal ${json.meta.current_page} dari ${totalPages || 1}`;
+                    document.getElementById('btn-prev').disabled = (currentPage <= 1);
+                    document.getElementById('btn-next').disabled = (currentPage >= totalPages);
+                    if (allHistory.length > 0) pagination.classList.remove('hidden');
+                    renderGrid();
+                } else {
+                    if (res.status === 401) window.location.href = '/login';
+                }
+            } catch (e) { console.error(e); }
+            finally { loading.classList.add('hidden'); }
+        }
+
+        function changePage(delta) {
+            const newPage = currentPage + delta;
+            if (newPage > 0 && newPage <= totalPages) {
+                currentPage = newPage;
+                loadHistory();
+                document.getElementById('history-scroll-area').scrollTop = 0;
+            }
+        }
+
+        function setFilter(type) {
+            currentFilter = type;
+            document.getElementById('tab-all').className = type === 'all' ? "flex-1 md:flex-none px-6 py-2 text-sm font-medium rounded-md bg-orange-100 text-orange-700 transition shadow-sm" : "flex-1 md:flex-none px-6 py-2 text-sm font-medium rounded-md text-gray-500 hover:text-orange-600 transition";
+            document.getElementById('tab-fav').className = type === 'fav' ? "flex-1 md:flex-none px-6 py-2 text-sm font-medium rounded-md bg-red-50 text-red-600 transition shadow-sm" : "flex-1 md:flex-none px-6 py-2 text-sm font-medium rounded-md text-gray-500 hover:text-orange-600 transition";
+            resetPageAndLoad();
+        }
+
+        function renderGrid() {
+            const container = document.getElementById('history-grid');
+            const empty = document.getElementById('empty-state');
+            container.innerHTML = '';
+            const data = allHistory;
+
+            if (data.length === 0) {
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            data.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition group flex flex-col h-full";
+                const snippet = (item.resep_text || "").replace(/\*/g, '').substring(0, 100) + "...";
+                const bahan = item.input_bahan || "Tanpa Bahan";
+
+                card.innerHTML = `
                 <div class="flex justify-between items-start mb-4">
                     <span class="bg-orange-50 text-orange-700 text-[10px] font-extrabold px-2.5 py-1 rounded-lg uppercase tracking-wider truncate max-w-[70%] border border-orange-100">${bahan}</span>
                     <span class="text-[10px] font-bold text-gray-400 shrink-0 uppercase">${new Date(item.created_at).toLocaleDateString('id-ID')}</span>
@@ -306,139 +374,111 @@
                     <button onclick="confirmDelete('${item.id}')" class="w-11 h-11 flex items-center justify-center rounded-xl border border-gray-200 hover:border-red-500 hover:text-red-500 transition shadow-sm text-gray-400"><i class="fa-solid fa-trash-can text-sm"></i></button>
                 </div>
             `;
-            container.appendChild(card);
-        });
-    }
-
-    function resetFilters() {
-        document.getElementById('search-history').value = '';
-        document.getElementById('start-date').value = '';
-        document.getElementById('end-date').value = '';
-        resetPageAndLoad();
-    }
-
-    // --- MODAL & EXPORT LOGIC ---
-    function openModal(encText, title) {
-        const text = decodeURIComponent(encText);
-        currentRecipeTitle = title; // Simpan judul untuk nama file PDF
-
-        const content = document.getElementById('modal-content');
-        let html = text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/- (.*?)(<br>|$)/g, '<div class="flex gap-2 mb-1"><span>•</span><span>$1</span></div>');
-
-        document.getElementById('modal-title').innerText = "Resep: " + title;
-        content.innerHTML = html;
-        document.getElementById('recipe-modal').classList.remove('hidden');
-    }
-
-    function closeModal() { document.getElementById('recipe-modal').classList.add('hidden'); }
-
-    // --- FITUR EKSPOR PDF (CLIENT SIDE) ---
-    async function downloadPDF() {
-        const { jsPDF } = window.jspdf;
-        const content = document.getElementById('modal-content-wrapper'); // Tangkap seluruh area konten modal
-
-        // Feedback User
-        const btn = document.querySelector('button[onclick="downloadPDF()"]');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Proses...`;
-        btn.disabled = true;
-
-        try {
-            // 1. Screenshot DOM menjadi Canvas
-            const canvas = await html2canvas(content, {
-                scale: 2, // Biar tajam (High DPI)
-                useCORS: true,
-                backgroundColor: '#ffffff' // Pastikan background putih
+                container.appendChild(card);
             });
-
-            const imgData = canvas.toDataURL('image/png');
-
-            // 2. Setup PDF (A4)
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = pdf.internal.pageSize.getHeight();
-
-            const imgWidth = pdfWidth - 20; // Margin kiri kanan 10mm
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-            // Header SmartKitchen
-            pdf.setFontSize(16);
-            pdf.setTextColor(255, 100, 0); // Orange
-            pdf.text("SmartKitchen AI Recipe", 10, 15);
-
-            pdf.setFontSize(10);
-            pdf.setTextColor(100);
-            pdf.text("Generated on: " + new Date().toLocaleString(), 10, 22);
-
-            // Masukkan Gambar Resep
-            pdf.addImage(imgData, 'PNG', 10, 30, imgWidth, imgHeight);
-
-            // 3. Save
-            pdf.save(`Resep_SmartKitchen_${currentRecipeTitle}.pdf`);
-            showToast("Resep berhasil disimpan! 📄", "success");
-
-        } catch (error) {
-            console.error(error);
-            showToast("Gagal membuat PDF", "error");
-        } finally {
-            btn.innerHTML = originalText;
-            btn.disabled = false;
         }
-    }
 
-    async function toggleFav(id) {
-        try {
-            const res = await fetch('/api/favorites', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ history_id: id })
-            });
-            const json = await res.json();
-            if(json.success) {
-                const index = allHistory.findIndex(x => x.id == id);
-                if(index !== -1) {
-                    allHistory[index].is_favorite = json.data.is_favorite;
-                    renderGrid();
-                    showToast(json.data.is_favorite ? "Masuk Favorit ❤️" : "Dihapus dari Favorit", "success");
-                }
+        function resetFilters() {
+            document.getElementById('search-history').value = '';
+            document.getElementById('start-date').value = '';
+            document.getElementById('end-date').value = '';
+            resetPageAndLoad();
+        }
+
+        function openModal(encText, title) {
+            const text = decodeURIComponent(encText);
+            currentRecipeTitle = title;
+            const content = document.getElementById('modal-content');
+            let html = text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/- (.*?)(<br>|$)/g, '<div class="flex gap-2 mb-1"><span>•</span><span>$1</span></div>');
+            document.getElementById('modal-title').innerText = "Resep: " + title;
+            content.innerHTML = html;
+            document.getElementById('recipe-modal').classList.remove('hidden');
+        }
+
+        function closeModal() { document.getElementById('recipe-modal').classList.add('hidden'); }
+
+        async function downloadPDF() {
+            const { jsPDF } = window.jspdf;
+            const content = document.getElementById('modal-content-wrapper');
+            const btn = document.querySelector('button[onclick="downloadPDF()"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Proses...`;
+            btn.disabled = true;
+
+            try {
+                const canvas = await html2canvas(content, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const imgWidth = pdfWidth - 20;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                pdf.setFontSize(16);
+                pdf.setTextColor(255, 100, 0);
+                pdf.text("SmartKitchen AI Recipe", 10, 15);
+                pdf.setFontSize(10);
+                pdf.setTextColor(100);
+                pdf.text("Generated on: " + new Date().toLocaleString(), 10, 22);
+                pdf.addImage(imgData, 'PNG', 10, 30, imgWidth, imgHeight);
+                pdf.save(`Resep_SmartKitchen_${currentRecipeTitle}.pdf`);
+                showToast("Resep berhasil disimpan! 📄", "success");
+            } catch (error) {
+                console.error(error);
+                showToast("Gagal membuat PDF", "error");
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
             }
-        } catch(e) { console.error(e); }
-    }
-
-    function confirmDelete(id) {
-        deleteTargetId = id;
-        document.getElementById('delete-modal').classList.remove('hidden');
-        document.getElementById('confirm-delete-btn').onclick = async () => { await deleteHistory(deleteTargetId); closeDeleteModal(); };
-    }
-    function closeDeleteModal() { document.getElementById('delete-modal').classList.add('hidden'); deleteTargetId = null; }
-    async function deleteHistory(id) {
-        try {
-            const res = await fetch(`/api/history/${id}`, { method: 'DELETE' });
-            if ((await res.json()).success) { loadHistory(); showToast("Dihapus", "success"); }
-        } catch (e) { showToast("Gagal", "error"); }
-    }
-
-    // Updated handleLogout to use Modal logic isn't needed here as we use confirmLogout directly now
-    // But kept keydown event listener
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            if (!document.getElementById('delete-modal').classList.contains('hidden')) closeDeleteModal();
-            if (!document.getElementById('recipe-modal').classList.contains('hidden')) closeModal();
-            if (!document.getElementById('logout-modal').classList.contains('hidden')) closeLogoutModal();
         }
-    });
 
-    let toastTimer;
-    function showToast(msg, type) {
-        const toast = document.getElementById('toast');
-        const content = document.getElementById('toast-content');
-        if(toastTimer) clearTimeout(toastTimer);
-        content.innerText = msg;
-        content.className = `px-6 py-4 rounded-xl shadow-xl text-white font-medium flex items-center gap-3 ${type === 'error' ? 'bg-red-500' : 'bg-green-500'}`;
-        toast.classList.remove('translate-x-full');
-        toastTimer = setTimeout(() => toast.classList.add('translate-x-full'), 3000);
-    }
-</script>
+        async function toggleFav(id) {
+            try {
+                const res = await fetch('/api/favorites', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ history_id: id })
+                });
+                const json = await res.json();
+                if (json.success) {
+                    showToast(json.data.is_favorite ? "Masuk Favorit ❤️" : "Dihapus dari Favorit", "success");
+                    loadHistory();
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function confirmDelete(id) {
+            deleteTargetId = id;
+            document.getElementById('delete-modal').classList.remove('hidden');
+            document.getElementById('confirm-delete-btn').onclick = async () => { await deleteHistory(deleteTargetId); closeDeleteModal(); };
+        }
+        function closeDeleteModal() { document.getElementById('delete-modal').classList.add('hidden'); deleteTargetId = null; }
+        async function deleteHistory(id) {
+            try {
+                const res = await fetch(`/api/history/${id}`, { method: 'DELETE' });
+                if ((await res.json()).success) { loadHistory(); showToast("Dihapus", "success"); }
+            } catch (e) { showToast("Gagal", "error"); }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (!document.getElementById('delete-modal').classList.contains('hidden')) closeDeleteModal();
+                if (!document.getElementById('recipe-modal').classList.contains('hidden')) closeModal();
+                if (!document.getElementById('logout-modal').classList.contains('hidden')) closeLogoutModal();
+            }
+        });
+
+        let toastTimer;
+        function showToast(msg, type) {
+            const toast = document.getElementById('toast');
+            const content = document.getElementById('toast-content');
+            if (toastTimer) clearTimeout(toastTimer);
+            content.innerText = msg;
+            content.className = `px-6 py-4 rounded-xl shadow-xl text-white font-medium flex items-center gap-3 ${type === 'error' ? 'bg-red-500' : 'bg-green-500'}`;
+            toast.classList.remove('translate-x-full');
+            toastTimer = setTimeout(() => toast.classList.add('translate-x-full'), 3000);
+        }
+    </script>
 </body>
+
 </html>

@@ -252,33 +252,36 @@ def get_user_favorites(user_id, search_query=None, start_date=None, end_date=Non
         cursor = conn.cursor()
 
         # Create some Main Filter
-        where_clause = "WHERE user_id = ? AND is_favorite = 1"
+        where_clause = ["user_id = ? AND is_favorite = 1"]
         params = [user_id]
 
         if search_query:
-            where_clause += " AND (input_bahan LIKE ? OR resep_text LIKE ?)"
+            where_clause.append("(input_bahan LIKE ? OR resep_text LIKE ?)")
             params.extend([f"%{search_query}%", f"%{search_query}%"])
 
         # Cek Start Date saja (Filter "Sejak Tanggal X")
         if start_date:
-            where_clause += " AND created_at >= ?"
+            where_clause.append("created_at >= ?")
             params.append(f"{start_date} 00:00:00")
 
         # Cek End Date saja (Filter "Sampai Tanggal Y")
         if end_date:
-            where_clause += " AND created_at <= ?"
+            where_clause.append("created_at <= ?")
             params.append(f"{end_date} 23:59:59")
 
+        # Gabung semua kondisi WHERE
+        full_where_clause = " WHERE " + " AND ".join(where_clause)
+
         # 2. Hitung TOTAL DATA (Tanpa Limit)
-        count_query = f"SELECT COUNT(*) FROM history {where_clause}"
+        count_query = f"SELECT COUNT(*) FROM history {full_where_clause}"
         cursor.execute(count_query, params)
         total_items = cursor.fetchone()[0]
 
         # 3. Ambil DATA HALAMAN INI (Pakai Limit & Offset)
         # Offset = (Halaman - 1) * Jumlah per halaman
         offset = (page - 1) * per_page
+        data_query = f"SELECT * FROM history {full_where_clause} ORDER BY created_at DESC LIMIT ? OFFSET ?"
 
-        data_query = f"SELECT * FROM history {where_clause} ORDER BY created_at DESC LIMIT ? OFFSET ?"
         data_params = params + [per_page, offset]
 
         cursor.execute(data_query, data_params)
