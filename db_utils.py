@@ -47,6 +47,17 @@ def init_db():
                        )
                    ''')
 
+    cursor.execute('''
+                   CREATE TABLE IF NOT EXISTS otp_verification (
+                                                          id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                                          email TEXT NOT NULL,
+                                                          otp_code TEXT NOT NULL,
+                                                          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                                                          expires_at DATETIME NOT NULL,
+                                                          is_used INTEGER DEFAULT 0
+                       )
+                   ''')
+
     conn.commit()
     conn.close()
     print(f"[DB] Database initialized at {DB_PATH}.")
@@ -389,6 +400,109 @@ def update_password(user_id, new_password_hash):
     except Exception as e:
         print(f"[DB Error] Update Password: {e}")
         return False, str(e)
+
+# ==========================================
+# 7. OTP Management
+# ==========================================
+def create_otp(email, otp_code, expiry_minutes=10):
+    """
+    Tugas: Menyimpan OTP ke database dengan waktu kadaluarsa.
+    """
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+
+        # Calculate expiry time
+        from datetime import datetime, timedelta
+        expires_at = datetime.now() + timedelta(minutes=expiry_minutes)
+
+        cursor.execute('''
+                       INSERT INTO otp_verification (email, otp_code, expires_at)
+                       VALUES (?, ?, ?)
+                       ''', (email, otp_code, expires_at.strftime('%Y-%m-%d %H:%M:%S')))
+
+        conn.commit()
+        conn.close()
+
+        print(f"[DB] OTP created for {email}")
+        return True
+    except Exception as e:
+        print(f"[DB Error] Create OTP: {e}")
+        return False
+
+def verify_otp(email, otp_code):
+    """
+    Tugas: Verifikasi OTP. Return True jika valid, False jika tidak.
+    """
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        from datetime import datetime
+
+        # Get the most recent unused OTP for this email
+        cursor.execute('''
+                       SELECT * FROM otp_verification 
+                       WHERE email = ? AND otp_code = ? AND is_used = 0
+                       ORDER BY created_at DESC
+                       LIMIT 1
+                       ''', (email, otp_code))
+
+        otp_record = cursor.fetchone()
+
+        if not otp_record:
+            conn.close()
+            return False
+
+        # Check if OTP is expired
+        expires_at = datetime.strptime(otp_record['expires_at'], '%Y-%m-%d %H:%M:%S')
+        if datetime.now() > expires_at:
+            conn.close()
+            return False
+
+        # Mark OTP as used
+        cursor.execute('''
+                       UPDATE otp_verification SET is_used = 1 
+                       WHERE id = ?
+                       ''', (otp_record['id'],))
+
+        conn.commit()
+        conn.close()
+
+        print(f"[DB] OTP verified for {email}")
+        return True
+    except Exception as e:
+        print(f"[DB Error] Verify OTP: {e}")
+        return False
+
+def cleanup_old_otps():
+    """
+    Tugas: Membersihkan OTP yang sudah kadaluarsa (opsional, untuk maintenance).
+    """
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+
+        from datetime import datetime, timedelta
+        # Delete OTPs older than 24 hours
+        cutoff_time = datetime.now() - timedelta(hours=24)
+
+        cursor.execute('''
+                       DELETE FROM otp_verification 
+                       WHERE created_at < ?
+                       ''', (cutoff_time.strftime('%Y-%m-%d %H:%M:%S'),))
+
+        deleted_count = cursor.rowcount
+        conn.commit()
+        conn.close()
+
+        if deleted_count > 0:
+            print(f"[DB] Cleaned up {deleted_count} old OTP records")
+        return deleted_count
+    except Exception as e:
+        print(f"[DB Error] Cleanup OTPs: {e}")
+        return 0
 
 # ==========================================
 # TEST AREA (Run this file directly to test)

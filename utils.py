@@ -3,6 +3,8 @@
 # ==========================================
 import os
 import re
+import random
+import string
 import requests
 from functools import wraps
 from flask import request, jsonify, session
@@ -81,7 +83,7 @@ def email_format(email):
 def minimum_password(password):
     """
     Tugas: Validasi kekuatan password.
-    Aturan: Minimal 8 karakter, ada huruf besar, huruf kecil, angka, dan simbol.
+    Aturan: Minimal 8 karakter, ada huruf besar, huruf kecil, dan angka.
     """
     if not password: return False
     if len(password) < 8:
@@ -91,8 +93,6 @@ def minimum_password(password):
     if not re.search(r'[a-z]', password): # Huruf Kecil
         return False
     if not re.search(r'[0-9]', password): # Angka
-        return False
-    if not re.search(r'[\W_]', password): # Simbol
         return False
     return True
 
@@ -127,3 +127,9 @@ def auth_required(f):
             }), 401
         return f(*args, **kwargs)
     return decorated_function
+
+def generate_otp(length=6):
+    """
+    Tugas: Generate OTP code (numeric only).
+    """
+    return ''.join(random.choices(string.digits, k=length))
