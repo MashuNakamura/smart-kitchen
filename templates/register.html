@@ -49,35 +49,59 @@
                             <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
                                 <i class="fa-solid fa-envelope"></i>
                             </span>
-                            <input type="email" name="email" class="w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition bg-gray-50 focus:bg-white" placeholder="contoh@email.com" required>
+                            <input type="email" name="email" id="email" class="w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition bg-gray-50 focus:bg-white" placeholder="contoh@email.com" required>
                         </div>
                     </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                        <div class="relative">
-                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-                                <i class="fa-solid fa-lock"></i>
-                            </span>
-                            <input type="password" name="password" id="password" class="w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition bg-gray-50 focus:bg-white" placeholder="••••••••" required>
+                    <div id="otpSection" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Kode OTP</label>
+                        <div class="flex gap-2">
+                            <div class="relative flex-1">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                                    <i class="fa-solid fa-key"></i>
+                                </span>
+                                <input type="text" name="otp" id="otp" maxlength="6" class="w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition bg-gray-50 focus:bg-white" placeholder="Masukkan 6 digit OTP">
+                            </div>
+                            <button type="button" id="btnResendOTP" onclick="requestOTP()" class="px-4 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition font-medium whitespace-nowrap">
+                                Kirim Ulang
+                            </button>
                         </div>
                         <p class="text-xs text-gray-500 mt-2 flex items-center gap-1">
-                            <i class="fa-solid fa-circle-info text-orange-400"></i> Min 8 karakter, Huruf Besar, Kecil, Angka
+                            <i class="fa-solid fa-circle-info text-orange-400"></i> Cek email Anda untuk kode OTP (berlaku 10 menit)
                         </p>
                     </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Konfirmasi Password</label>
-                        <div class="relative">
-                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-                                <i class="fa-solid fa-check-double"></i>
-                            </span>
-                            <input type="password" name="confirm_password" id="confirm_password" class="w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition bg-gray-50 focus:bg-white" placeholder="Ulangi Password" required>
+                    <div id="passwordSection" class="hidden">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                                    <i class="fa-solid fa-lock"></i>
+                                </span>
+                                <input type="password" name="password" id="password" class="w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition bg-gray-50 focus:bg-white" placeholder="••••••••">
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                                <i class="fa-solid fa-circle-info text-orange-400"></i> Min 8 karakter, Huruf Besar, Kecil, Angka
+                            </p>
+                        </div>
+
+                        <div class="mt-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Konfirmasi Password</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                                    <i class="fa-solid fa-check-double"></i>
+                                </span>
+                                <input type="password" name="confirm_password" id="confirm_password" class="w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition bg-gray-50 focus:bg-white" placeholder="Ulangi Password">
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <button type="submit" id="btnSubmit" class="w-full mt-8 bg-orange-500 text-white font-bold py-3 rounded-xl hover:bg-orange-600 transition shadow-lg shadow-orange-500/30 transform hover:-translate-y-0.5">
+                <button type="button" id="btnRequestOTP" onclick="requestOTP()" class="w-full mt-8 bg-orange-500 text-white font-bold py-3 rounded-xl hover:bg-orange-600 transition shadow-lg shadow-orange-500/30 transform hover:-translate-y-0.5">
+                    Minta Kode OTP
+                </button>
+
+                <button type="submit" id="btnSubmit" class="w-full mt-4 bg-orange-500 text-white font-bold py-3 rounded-xl hover:bg-orange-600 transition shadow-lg shadow-orange-500/30 transform hover:-translate-y-0.5 hidden">
                     Daftar Sekarang
                 </button>
             </form>
@@ -98,6 +122,75 @@
 
 <script>
     let toastTimer = null;
+    let otpRequested = false;
+
+    async function requestOTP() {
+        const email = document.getElementById('email').value;
+        const btn = document.getElementById('btnRequestOTP');
+        const resendBtn = document.getElementById('btnResendOTP');
+        
+        if (!email) {
+            showToast("Masukkan email terlebih dahulu!", "error");
+            return;
+        }
+
+        // Determine which button was clicked
+        const activeBtn = otpRequested ? resendBtn : btn;
+        const originalText = activeBtn.innerText;
+
+        // Loading State
+        activeBtn.disabled = true;
+        activeBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Mengirim...';
+        activeBtn.classList.add('opacity-75', 'cursor-not-allowed');
+
+        try {
+            const res = await fetch('/api/request-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+            const json = await res.json();
+
+            if (res.ok && json.success) {
+                showToast(json.message || "OTP berhasil dikirim!", "success");
+                
+                // Show OTP section and password section
+                document.getElementById('otpSection').classList.remove('hidden');
+                document.getElementById('passwordSection').classList.remove('hidden');
+                document.getElementById('btnRequestOTP').classList.add('hidden');
+                document.getElementById('btnSubmit').classList.remove('hidden');
+                
+                // Make password fields required
+                document.getElementById('password').setAttribute('required', 'required');
+                document.getElementById('confirm_password').setAttribute('required', 'required');
+                document.getElementById('otp').setAttribute('required', 'required');
+                
+                // Disable email field
+                document.getElementById('email').setAttribute('readonly', 'readonly');
+                document.getElementById('email').classList.add('bg-gray-100');
+                
+                otpRequested = true;
+
+                // For development: show OTP in console (REMOVE IN PRODUCTION)
+                if (json.otp) {
+                    console.log('OTP Code:', json.otp);
+                    showToast(`[DEV] OTP: ${json.otp}`, "success");
+                }
+            } else {
+                if(res.status === 429) showToast("Terlalu banyak request. Tunggu sebentar.", "error");
+                else showToast(json.message || "Gagal mengirim OTP", "error");
+                resetBtn(activeBtn, originalText);
+            }
+        } catch (err) {
+            console.error(err);
+            showToast("Gagal menghubungi server", "error");
+            resetBtn(activeBtn, originalText);
+        }
+
+        if (otpRequested) {
+            resetBtn(resendBtn, "Kirim Ulang");
+        }
+    }
 
     async function handleRegister(e) {
         e.preventDefault();
@@ -122,12 +215,12 @@
         btn.classList.add('opacity-75', 'cursor-not-allowed');
 
         const formData = new FormData(e.target);
-        // Kita hanya kirim field yang dibutuhkan API (username, email, password)
-        // field confirm_password tidak perlu dikirim ke backend
+        // Kita kirim semua field yang dibutuhkan API
         const data = {
             username: formData.get('username'),
             email: formData.get('email'),
-            password: formData.get('password')
+            password: formData.get('password'),
+            otp: formData.get('otp')
         };
 
         try {
@@ -180,7 +273,7 @@
         toast.classList.remove('translate-x-full');
         toastTimer = setTimeout(() => {
             toast.classList.add('translate-x-full');
-        }, 3000);
+        }, 5000);
     }
 </script>
 </body>

@@ -64,6 +64,71 @@ except Exception as e:
 # ==========================================
 # AUTH ROUTES (Login & Register & Logout)
 # ==========================================
+@app.route('/api/request-otp', methods=['POST'])
+@limiter.limit("3 per minute") # [Limit] Max 3x request OTP per menit
+def request_otp():
+    # Get JSON Data from Request
+    data, error = utils.data_validate()
+    if error: return error
+
+    # User Data
+    email = data.get("email")
+
+    # Validate Data
+    if not email:
+        return jsonify({
+            'error_code': 1,
+            'success': False,
+            'message': 'Email is required.'
+        }), 400
+
+    # Validate Email Format
+    if not utils.email_format(email):
+        return jsonify({
+            'error_code': 2,
+            'success': False,
+            'message': 'Invalid email format.'
+        }), 400
+
+    # Check if email already exists
+    existing_user = db_utils.check_user(email)
+    if existing_user:
+        return jsonify({
+            'error_code': 4,
+            'success': False,
+            'message': 'Email already registered.'
+        }), 400
+
+    # Generate OTP
+    otp_code = utils.generate_otp()
+
+    # Save OTP to database
+    if db_utils.create_otp(email, otp_code, expiry_minutes=10):
+        # Send OTP via email
+        email_sent = utils.send_otp_email(email, otp_code)
+        
+        # Log OTP for development/debugging
+        print(f"[OTP] Generated OTP for {email}: {otp_code}")
+        
+        # Build response
+        response_data = {
+            'error_code': 0,
+            'success': True,
+            'message': 'OTP sent successfully. Please check your email.' if email_sent else 'OTP generated. Check server logs for code.'
+        }
+        
+        # Only include OTP in response in development mode or if email failed
+        if os.environ.get('FLASK_ENV') == 'development' or os.environ.get('DEBUG') == 'true' or not email_sent:
+            response_data['otp'] = otp_code  # Development only or fallback
+        
+        return jsonify(response_data)
+    else:
+        return jsonify({
+            'error_code': 5,
+            'success': False,
+            'message': 'Failed to generate OTP. Please try again.'
+        }), 500
+
 @app.route('/api/register', methods=['POST'])
 @limiter.limit("5 per minute") # [Limit] Max 5x coba register per menit
 def register():
@@ -75,13 +140,14 @@ def register():
     username = data.get("username")
     email    = data.get("email")
     password = data.get("password")
+    otp_code = data.get("otp")
 
     # Validate Data
-    if not username or not email or not password:
+    if not username or not email or not password or not otp_code:
         return jsonify({
             'error_code': 1,
             'success': False,
-            'message': 'Username and Password are required.'
+            'message': 'Username, Email, Password, and OTP are required.'
         }), 400
 
     # Validate Email Format
@@ -99,6 +165,14 @@ def register():
             'success': False,
             'message': 'Password must be at least 8 characters long. 1 uppercase, 1 lowercase, 1 number.'
         })
+
+    # Verify OTP
+    if not db_utils.verify_otp(email, otp_code):
+        return jsonify({
+            'error_code': 6,
+            'success': False,
+            'message': 'Invalid or expired OTP code.'
+        }), 400
 
     # Hash Password
     hashed_password = pwd_context.hash(password)
