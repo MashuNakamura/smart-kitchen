@@ -4,6 +4,7 @@
 import os
 import sqlite3
 import math
+from datetime import datetime, timedelta
 
 # ==========================================
 # Database Configuration
@@ -413,7 +414,6 @@ def create_otp(email, otp_code, expiry_minutes=10):
         cursor = conn.cursor()
 
         # Calculate expiry time
-        from datetime import datetime, timedelta
         expires_at = datetime.now() + timedelta(minutes=expiry_minutes)
 
         cursor.execute('''
@@ -438,8 +438,6 @@ def verify_otp(email, otp_code):
         conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-
-        from datetime import datetime
 
         # Get the most recent unused OTP for this email
         cursor.execute('''
@@ -484,7 +482,6 @@ def cleanup_old_otps():
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
 
-        from datetime import datetime, timedelta
         # Delete OTPs older than 24 hours
         cutoff_time = datetime.now() - timedelta(hours=24)
 
