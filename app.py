@@ -104,20 +104,22 @@ def request_otp():
 
     # Save OTP to database
     if db_utils.create_otp(email, otp_code, expiry_minutes=10):
-        # In production, send OTP via email
-        # For now, we'll log it (in development)
+        # Send OTP via email
+        email_sent = utils.send_otp_email(email, otp_code)
+        
+        # Log OTP for development/debugging
         print(f"[OTP] Generated OTP for {email}: {otp_code}")
         
         # Build response
         response_data = {
             'error_code': 0,
             'success': True,
-            'message': 'OTP sent successfully. Please check your email.'
+            'message': 'OTP sent successfully. Please check your email.' if email_sent else 'OTP generated. Check server logs for code.'
         }
         
-        # Only include OTP in response in development mode
-        if os.environ.get('FLASK_ENV') == 'development' or os.environ.get('DEBUG') == 'true':
-            response_data['otp'] = otp_code  # Development only
+        # Only include OTP in response in development mode or if email failed
+        if os.environ.get('FLASK_ENV') == 'development' or os.environ.get('DEBUG') == 'true' or not email_sent:
+            response_data['otp'] = otp_code  # Development only or fallback
         
         return jsonify(response_data)
     else:
