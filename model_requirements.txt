@@ -1,0 +1,20 @@
+# --- Web Framework ---
+flask
+flask-cors
+
+# --- Data Processing ---
+pandas
+numpy
+scipy
+
+# HuggingFace & LLM Utilities
+transformers>=4.37.0
+accelerate
+peft
+huggingface-hub
+bitsandbytes
+torch
+
+# Retrieval (RAG)
+sentence-transformers
+faiss-cpu

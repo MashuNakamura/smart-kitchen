@@ -6,19 +6,9 @@ python-dotenv
 passlib
 bcrypt==4.0.1
 waitress
+requests
 
 # --- Data Processing ---
 pandas
 numpy
 scipy
-
-# HuggingFace & LLM Utilities
-transformers>=4.37.0
-accelerate
-peft
-huggingface-hub
-bitsandbytes
-
-# Retrieval (RAG)
-sentence-transformers
-faiss-cpu

@@ -4,7 +4,7 @@
 import os
 import math
 from flask import Flask, jsonify, request, render_template, session, redirect, url_for
-from flask_cors import CORS
+
 from passlib.context import CryptContext
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -18,7 +18,7 @@ import db_utils
 app = Flask(__name__)
 
 # NOTE : Change this in production to link deployed
-CORS(app, resources={r"/api/*": {"origins": ["http://127.0.0.1:5000", "http://localhost:5000"]}})
+
 
 # Konfigurasi Secret Key untuk session
 app.secret_key = os.environ.get("SECRET_KEY", "kelapasawit123!@#")
@@ -449,8 +449,8 @@ def view_register():
     # Redirect to dashboard if already logged in
     if 'user_id' in session:
         return redirect(url_for('view_dashboard'))
-    # return render_template('register.html')
-    return render_template('login.html')
+    return render_template('register.html')
+    # return render_template('login.html')
 
 @app.route('/login')
 def view_login():
@@ -464,7 +464,8 @@ def view_dashboard():
     # Protect route, redirect to login if not logged in
     if 'user_id' not in session:
         return redirect(url_for('view_login'))
-    return render_template('dashboard.html')
+    model_server_url = os.environ.get("MODEL_SERVER_URL", "http://localhost:5001")
+    return render_template('dashboard.html', model_server_url=model_server_url)
 
 @app.route('/history')
 def view_history_page():
