@@ -232,3 +232,104 @@ def send_otp_email(email, otp_code):
     except Exception as e:
         print(f"[EMAIL] Failed to send OTP email: {e}")
         return False
+
+def send_password_reset_otp_email(email, otp_code):
+    """
+    Tugas: Mengirim OTP untuk reset password via email.
+    Return: True jika berhasil, False jika gagal.
+    """
+    try:
+        # Get email configuration from environment variables
+        smtp_server = os.environ.get('SMTP_SERVER', 'smtp.gmail.com')
+        smtp_port = int(os.environ.get('SMTP_PORT', '587'))
+        smtp_username = os.environ.get('SMTP_USERNAME')
+        smtp_password = os.environ.get('SMTP_PASSWORD')
+        smtp_from_email = os.environ.get('SMTP_FROM_EMAIL', smtp_username)
+        
+        # Validate configuration
+        if not smtp_username or not smtp_password:
+            print("[EMAIL] SMTP credentials not configured. Skipping email send.")
+            return False
+        
+        # Create message
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = 'Kode OTP Reset Password - SmartKitchen'
+        msg['From'] = smtp_from_email
+        msg['To'] = email
+        
+        # Create HTML content
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ background-color: #f97316; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }}
+                .content {{ background-color: #f9fafb; padding: 30px; border-radius: 0 0 5px 5px; }}
+                .otp-box {{ background-color: white; border: 2px solid #f97316; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 20px 0; border-radius: 5px; }}
+                .footer {{ text-align: center; margin-top: 20px; color: #666; font-size: 12px; }}
+                .warning {{ background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px; margin: 20px 0; border-radius: 4px; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>🍳 SmartKitchen</h1>
+                </div>
+                <div class="content">
+                    <h2>Reset Password</h2>
+                    <p>Kami menerima permintaan untuk mereset password akun Anda.</p>
+                    <p>Gunakan kode OTP berikut untuk mereset password Anda:</p>
+                    <div class="otp-box">{otp_code}</div>
+                    <p><strong>Kode ini berlaku selama 10 menit.</strong></p>
+                    <div class="warning">
+                        <strong>⚠️ Peringatan Keamanan:</strong><br>
+                        Jika Anda tidak meminta reset password, abaikan email ini dan password Anda akan tetap aman.
+                    </div>
+                </div>
+                <div class="footer">
+                    <p>© 2026 SmartKitchen AI - Final Project</p>
+                    <p>Email ini dikirim secara otomatis, mohon tidak membalas.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        # Create plain text alternative
+        text_content = f"""
+        SmartKitchen - Reset Password
+        
+        Kami menerima permintaan untuk mereset password akun Anda.
+        
+        Gunakan kode OTP berikut untuk mereset password Anda:
+        
+        {otp_code}
+        
+        Kode ini berlaku selama 10 menit.
+        
+        ⚠️ PERINGATAN KEAMANAN:
+        Jika Anda tidak meminta reset password, abaikan email ini dan password Anda akan tetap aman.
+        
+        © 2026 SmartKitchen AI - Final Project
+        """
+        
+        # Attach both plain text and HTML versions
+        part1 = MIMEText(text_content, 'plain')
+        part2 = MIMEText(html_content, 'html')
+        msg.attach(part1)
+        msg.attach(part2)
+        
+        # Send email
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()  # Secure the connection
+            server.login(smtp_username, smtp_password)
+            server.send_message(msg)
+        
+        print(f"[EMAIL] Password reset OTP sent successfully to {email}")
+        return True
+        
+    except Exception as e:
+        print(f"[EMAIL] Failed to send password reset OTP email: {e}")
+        return False

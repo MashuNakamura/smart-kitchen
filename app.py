@@ -242,6 +242,143 @@ def logout():
         'message': 'Logged out successfully.'
     })
 
+@app.route('/api/request-password-reset-otp', methods=['POST'])
+@limiter.limit("3 per minute") # [Limit] Max 3x request reset OTP per menit
+def request_password_reset_otp():
+    # Get JSON Data from Request
+    data, error = utils.data_validate()
+    if error: return error
+
+    # User Data
+    email = data.get("email")
+
+    # Validate Data
+    if not email:
+        return jsonify({
+            'error_code': 1,
+            'success': False,
+            'message': 'Email is required.'
+        }), 400
+
+    # Validate Email Format
+    if not utils.email_format(email):
+        return jsonify({
+            'error_code': 2,
+            'success': False,
+            'message': 'Invalid email format.'
+        }), 400
+
+    # Check if email exists
+    existing_user = db_utils.check_user(email)
+    if not existing_user:
+        return jsonify({
+            'error_code': 4,
+            'success': False,
+            'message': 'Email not registered.'
+        }), 400
+
+    # Generate OTP
+    otp_code = utils.generate_otp()
+
+    # Save OTP to database
+    if db_utils.create_otp(email, otp_code, expiry_minutes=10):
+        # Send OTP via email
+        email_sent = utils.send_password_reset_otp_email(email, otp_code)
+        
+        # Log OTP for development/debugging
+        print(f"[OTP] Generated password reset OTP for {email}: {otp_code}")
+        
+        # Build response
+        response_data = {
+            'error_code': 0,
+            'success': True,
+            'message': 'OTP sent successfully. Please check your email.' if email_sent else 'OTP generated. Check server logs for code.'
+        }
+        
+        # Only include OTP in response in development mode or if email failed
+        if os.environ.get('FLASK_ENV') == 'development' or os.environ.get('DEBUG') == 'true' or not email_sent:
+            response_data['otp'] = otp_code  # Development only or fallback
+        
+        return jsonify(response_data)
+    else:
+        return jsonify({
+            'error_code': 5,
+            'success': False,
+            'message': 'Failed to generate OTP. Please try again.'
+        }), 500
+
+@app.route('/api/reset-password', methods=['POST'])
+@limiter.limit("5 per minute") # [Limit] Max 5x coba reset password per menit
+def reset_password():
+    # Get JSON Data from Request
+    data, error = utils.data_validate()
+    if error: return error
+
+    # User Data
+    email = data.get("email")
+    otp_code = data.get("otp")
+    new_password = data.get("new_password")
+
+    # Validate Data
+    if not email or not otp_code or not new_password:
+        return jsonify({
+            'error_code': 1,
+            'success': False,
+            'message': 'Email, OTP, and new password are required.'
+        }), 400
+
+    # Validate Email Format
+    if not utils.email_format(email):
+        return jsonify({
+            'error_code': 2,
+            'success': False,
+            'message': 'Invalid email format.'
+        }), 400
+
+    # Validate Password Strength
+    if not utils.minimum_password(new_password):
+        return jsonify({
+            'error_code': 3,
+            'success': False,
+            'message': 'Password must be at least 8 characters long. 1 uppercase, 1 lowercase, 1 number.'
+        }), 400
+
+    # Verify OTP
+    if not db_utils.verify_otp(email, otp_code):
+        return jsonify({
+            'error_code': 6,
+            'success': False,
+            'message': 'Invalid or expired OTP code.'
+        }), 400
+
+    # Get user to ensure they exist
+    user = db_utils.check_user(email)
+    if not user:
+        return jsonify({
+            'error_code': 4,
+            'success': False,
+            'message': 'User not found.'
+        }), 404
+
+    # Hash new password
+    hashed_password = pwd_context.hash(new_password)
+
+    # Update password
+    success, msg = db_utils.update_password(user['id'], hashed_password)
+
+    if success:
+        return jsonify({
+            'error_code': 0,
+            'success': True,
+            'message': 'Password reset successfully. You can now login with your new password.'
+        })
+    else:
+        return jsonify({
+            'error_code': 5,
+            'success': False,
+            'message': f'Failed to reset password: {msg}'
+        }), 500
+
 # ==========================================
 # Core Recipe Generation
 # ==========================================
@@ -532,6 +669,20 @@ def view_login():
     if 'user_id' in session:
         return redirect(url_for('view_dashboard'))
     return render_template('login.html')
+
+@app.route('/forgot-password')
+def view_forgot_password():
+    # Redirect to dashboard if already logged in
+    if 'user_id' in session:
+        return redirect(url_for('view_dashboard'))
+    return render_template('forgot-password.html')
+
+@app.route('/reset-password')
+def view_reset_password():
+    # Redirect to dashboard if already logged in
+    if 'user_id' in session:
+        return redirect(url_for('view_dashboard'))
+    return render_template('reset-password.html')
 
 @app.route('/dashboard')
 def view_dashboard():
