@@ -7,6 +7,7 @@ import pandas as pd
 import torch
 from difflib import SequenceMatcher
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TextStreamer
 from peft import PeftModel
@@ -17,6 +18,7 @@ import faiss
 # SETUP & SECURITY CONFIGURATION
 # ==========================================
 app = Flask(__name__)
+CORS(app)
 
 # NOTE : Change this in production to link deployed
 
@@ -28,6 +30,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_RESEP_PATH = os.path.join(BASE_DIR, 'data', 'Indonesian_Food_Recipes.csv')
 DATA_NUTRISI_PATH = os.path.join(BASE_DIR, 'data', 'nutrition.csv')
 MODEL_ADAPTER_PATH = os.path.join(BASE_DIR, 'models', 'model_chef_siap_pakai')
+FAISS_INDEX_PATH = os.path.join(BASE_DIR, 'models', 'faiss_index.bin')
+RAG_DATA_PATH = os.path.join(BASE_DIR, 'models', 'rag_data.pkl')
 
 # Validasi Path (Safety Check)
 if not BASE_DIR:
@@ -71,44 +75,72 @@ def load_resources():
 
     print("--- [UTILS] LOADING RESOURCES... ---")
 
-    # A. LOAD DATASET & MERGE NUTRISI
-    print("   [1/3] Loading Dataset & Nutrisi...")
-    try:
-        df_resep = pd.read_csv(DATA_RESEP_PATH)
+    # A. LOAD DATASET & MERGE NUTRISI (WITH CACHE)
+    print("   [1/3] Checking Cache for RAG & FAISS...")
+    
+    # Check if cache exists
+    if os.path.exists(FAISS_INDEX_PATH) and os.path.exists(RAG_DATA_PATH):
+        print("   [CACHE HIT] Loading Vector DB & Dataset from disk...")
         try:
-            df_nutri = pd.read_csv(DATA_NUTRISI_PATH)
-            # Normalisasi
-            df_resep['temp_key'] = df_resep['Title'].str.lower().str.strip()
-            df_nutri['temp_key'] = df_nutri['name'].str.lower().str.strip()
-            # Merge
-            df_full = df_resep.merge(df_nutri[['temp_key', 'calories', 'proteins']], on='temp_key', how='left')
-            df_full[['calories', 'proteins']] = df_full[['calories', 'proteins']].fillna(-1)
-            df_full.drop(columns=['temp_key'], inplace=True)
+            df_rag = pd.read_pickle(RAG_DATA_PATH)
+            index = faiss.read_index(FAISS_INDEX_PATH)
+            
+            # Load Embedder only (needed for query encoding)
+            embedder = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
+            print("   [CACHE] Resources loaded successfully!")
         except Exception as e:
-            print(f"   [WARN] Gagal merge nutrisi ({e}). Lanjut tanpa nutrisi.")
-            df_full = df_resep
-            df_full['calories'] = -1
-            df_full['proteins'] = -1
+            print(f"   [CACHE ERR] Corrupt cache ({e}). Rebuilding...")
+            # Fallback to rebuild if cache fails
+            pass
+    
+    # If not loaded from cache, Build it
+    if df_rag is None or index is None:
+        print("   [BUILD] Start Building Resources...")
+        try:
+            df_resep = pd.read_csv(DATA_RESEP_PATH)
+            try:
+                df_nutri = pd.read_csv(DATA_NUTRISI_PATH)
+                # Normalisasi
+                df_resep['temp_key'] = df_resep['Title'].str.lower().str.strip()
+                df_nutri['temp_key'] = df_nutri['name'].str.lower().str.strip()
+                # Merge
+                df_full = df_resep.merge(df_nutri[['temp_key', 'calories', 'proteins']], on='temp_key', how='left')
+                df_full[['calories', 'proteins']] = df_full[['calories', 'proteins']].fillna(-1)
+                df_full.drop(columns=['temp_key'], inplace=True)
+            except Exception as e:
+                print(f"   [WARN] Gagal merge nutrisi ({e}). Lanjut tanpa nutrisi.")
+                df_full = df_resep
+                df_full['calories'] = -1
+                df_full['proteins'] = -1
 
-        df_rag = df_full.copy()
-        # Clean Ingredients buat search
-        df_rag['Ingredients_Clean'] = df_rag['Ingredients'].astype(str).str.replace('--', ' ')
-        df_rag['search_text'] = "Masakan: " + df_rag['Title'] + " Bahan: " + df_rag['Ingredients_Clean']
+            df_rag = df_full.copy()
+            # Clean Ingredients buat search
+            df_rag['Ingredients_Clean'] = df_rag['Ingredients'].astype(str).str.replace('--', ' ')
+            df_rag['search_text'] = "Masakan: " + df_rag['Title'] + " Bahan: " + df_rag['Ingredients_Clean']
+            
+            # Save DF Cache
+            df_rag.to_pickle(RAG_DATA_PATH)
+            print(f"   [CACHE] Dataset saved to {RAG_DATA_PATH}")
 
-    except Exception as e:
-        print(f"   [FATAL] Gagal load dataset: {e}")
-        return
+        except Exception as e:
+            print(f"   [FATAL] Gagal load dataset: {e}")
+            return
 
-    # B. BUILD VECTOR DB (FAISS)
-    print("   [2/3] Building Vector Database (FAISS)...")
-    try:
-        embedder = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
-        embeddings = embedder.encode(df_rag['search_text'].tolist(), show_progress_bar=True)
-        index = faiss.IndexFlatL2(embeddings.shape[1])
-        index.add(embeddings)
-    except Exception as e:
-        print(f"   [FATAL] Gagal build FAISS: {e}")
-        return
+        # B. BUILD VECTOR DB (FAISS)
+        print("   [2/3] Building Vector Database (FAISS)...")
+        try:
+            embedder = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
+            embeddings = embedder.encode(df_rag['search_text'].tolist(), show_progress_bar=True)
+            index = faiss.IndexFlatL2(embeddings.shape[1])
+            index.add(embeddings)
+            
+            # Save FAISS Cache
+            faiss.write_index(index, FAISS_INDEX_PATH)
+            print(f"   [CACHE] FAISS Index saved to {FAISS_INDEX_PATH}")
+            
+        except Exception as e:
+            print(f"   [FATAL] Gagal build FAISS: {e}")
+            return
 
     # C. LOAD AI MODEL (Qwen + Adapter)
     print("   [3/3] Loading AI Model (Qwen 1.5B)...")
@@ -150,13 +182,20 @@ def super_clean_output(text):
     if not text: return ""
 
     # Pre-processing
-    text = text.replace("--", "
-- ")
+    text = text.replace("●", "\n- ").replace("•", "\n- ")
+    text = text.replace("--", "\n- ") # FIX: Double dash means new item
+    
+    # FIX: Use regex to avoid adding newline if one already exists
+    text = re.sub(r'(?<!\n)- ', '\n- ', text)
+
+    # Normalize Headers
     text = text.replace("Bahan-bahan Lengkap:", "Bahan-bahan:")
+    text = text.replace("Bahan Bahan:", "Bahan-bahan:")
+    
     text = re.sub(r',(?!\s|\d)', ', ', text) # Fix spasi koma
 
-    lines = text.split('
-')
+    # FIX: Changed split('') to split('\n')
+    lines = text.split('\n')
     cleaned_lines = []
 
     section = "HEADER"
@@ -175,7 +214,7 @@ def super_clean_output(text):
 
         # Skip baris kosong/strip doang
         if not stripped or stripped in ["-", "- "]:
-            if not stripped and cleaned_lines and cleaned_lines[-1]: cleaned_lines.append("")
+            # FIX: Don't add random empty lines to keep it compact
             continue
 
         # Stop jika ketemu kata terlarang
@@ -192,18 +231,15 @@ def super_clean_output(text):
         # Deteksi Section
         if "Bahan-bahan:" in stripped or "Bahan:" in stripped:
             section = "BAHAN"
-            cleaned_lines.append("
-Bahan-bahan:")
+            cleaned_lines.append("Bahan-bahan:")
             continue
         elif "Cara Membuat:" in stripped or "Langkah:" in stripped:
             section = "CARA"
-            cleaned_lines.append("
-Cara Membuat:")
+            cleaned_lines.append("Cara Membuat:")
             continue
         elif "Informasi Gizi" in stripped or "Info Nutrisi" in stripped:
             section = "GIZI"
-            cleaned_lines.append("
-Informasi Gizi (Estimasi per porsi):")
+            cleaned_lines.append("Informasi Gizi (Estimasi per porsi):")
             continue
 
         # Formatting per Section
@@ -224,23 +260,15 @@ Informasi Gizi (Estimasi per porsi):")
         seen_lines.append(stripped)
 
     # Fallback Nutrisi
-    result = '
-'.join(cleaned_lines).strip()
+    result = '\n'.join(cleaned_lines).strip()
     if "Informasi Gizi" in result:
         last_lines = result.split("Informasi Gizi")[-1]
         if len(last_lines.strip()) < 5:
-            result += "
-- Kalori: Estimasi 350-500 kkal
-- Protein: Data spesifik belum tersedia"
+            result += "\n- Kalori: Estimasi 350-500 kkal\n- Protein: Data spesifik belum tersedia"
     else:
-        result += "
-
-Informasi Gizi (Estimasi per porsi):
-- Kalori: Estimasi 350-500 kkal
-- Protein: Data spesifik belum tersedia"
+        result += "\n\nInformasi Gizi (Estimasi per porsi):\n- Kalori: Estimasi 350-500 kkal\n- Protein: Data spesifik belum tersedia"
 
     return result
-
 
 # ==========================================
 # 3. Smart Retrieval Function
@@ -282,12 +310,9 @@ def retrieve_smart_filter(query, mode="normal"):
     if best_item['calories'] != -1:
         nutri_str = f"Kalori: {best_item['calories']} kcal, Protein: {best_item['proteins']} g"
 
-    return (f"Judul: {best_item['Title']}
-"
-            f"Bahan Asli: {best_item['Ingredients']}
-"
-            f"Langkah Asli: {best_item['Steps']}
-"
+    return (f"Judul: {best_item['Title']}\n"
+            f"Bahan Asli: {best_item['Ingredients']}\n"
+            f"Langkah Asli: {best_item['Steps']}\n"
             f"[Info Nutrisi Dataset]: {nutri_str}")
 
 
@@ -316,7 +341,7 @@ Anda adalah Chef Profesional. Buat SATU resep lengkap menggunakan bahan '{bahan_
 ATURAN PENTING:
 1. Format Output WAJIB:
    - Nama Masakan: [Nama yang menarik]
-   - Bahan-bahan: [List bahan dengan bullet point]
+   - Bahan-bahan: [Wajib pakai tanda '-' di setiap baris baru]
    - Cara Membuat: [Langkah-langkah dengan nomor]
    - Informasi Gizi: [Estimasi Kalori & Protein]
 2. Gunakan Bahasa Indonesia yang rapi.
