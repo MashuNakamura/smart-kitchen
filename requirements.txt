@@ -1,14 +1,28 @@
-# --- Web Framework ---
+# --- Web Framework & Server ---
 flask
 flask-cors
 flask-limiter
-python-dotenv
-passlib
-bcrypt==4.0.1
 waitress
 requests
+python-dotenv
+
+# --- Security & Auth ---
+passlib
+bcrypt==4.0.1
 
 # --- Data Processing ---
 pandas
 numpy
 scipy
+
+# --- AI & LLM Utilities ---
+torch
+transformers>=4.37.0
+accelerate
+peft
+huggingface-hub
+bitsandbytes
+
+# --- Retrieval (RAG) ---
+sentence-transformers
+faiss-cpu
