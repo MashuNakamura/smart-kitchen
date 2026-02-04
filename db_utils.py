@@ -19,6 +19,7 @@ DB_PATH = os.path.join(DB_FOLDER, DB_NAME)
 def init_db():
     """
     Tugas: Membuat tabel SQL asli dengan constraint UNIQUE.
+    Init DB saat pertama kali aplikasi dijalankan dan membuat folder DB jika belum ada.
     """
     if not os.path.exists(DB_FOLDER):
         os.makedirs(DB_FOLDER)

@@ -47,6 +47,7 @@ def load_resources():
 def generate_resep_final(bahan_input, mode="normal"):
     """
     Tugas: Pipeline Utama (Load -> Retrieve -> Generate -> Clean).
+    Bagian utama yang memanggil Model AI via API
     """
     api_key = os.environ.get("API_KEY")
     if not api_key:
