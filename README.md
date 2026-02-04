@@ -128,5 +128,9 @@ Akses aplikasi di browser melalui: [http://localhost:5000](http://localhost:5000
 - **Jefferey Chealfiro Isdhianto** - Data Scientist & Frontend Engineer
 - **Fernando Perry** - MLOps & Infrastructure
 
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
 ---
 **SmartKitchen AI - 2026**
