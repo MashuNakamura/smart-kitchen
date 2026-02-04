@@ -78,7 +78,10 @@
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
                                     <i class="fa-solid fa-lock"></i>
                                 </span>
-                                <input type="password" name="password" id="password" class="w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition bg-gray-50 focus:bg-white" placeholder="••••••••">
+                                <input type="password" name="password" id="password" class="w-full pl-10 pr-10 py-3 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition bg-gray-50 focus:bg-white" placeholder="••••••••">
+                                <button type="button" onclick="togglePassword('password', 'icon-password')" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 focus:outline-none">
+                                    <i class="fa-solid fa-eye" id="icon-password"></i>
+                                </button>
                             </div>
                             <p class="text-xs text-gray-500 mt-2 flex items-center gap-1">
                                 <i class="fa-solid fa-circle-info text-orange-400"></i> Min 8 karakter, Huruf Besar, Kecil, Angka
@@ -91,7 +94,10 @@
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
                                     <i class="fa-solid fa-check-double"></i>
                                 </span>
-                                <input type="password" name="confirm_password" id="confirm_password" class="w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition bg-gray-50 focus:bg-white" placeholder="Ulangi Password">
+                                <input type="password" name="confirm_password" id="confirm_password" class="w-full pl-10 pr-10 py-3 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition bg-gray-50 focus:bg-white" placeholder="Ulangi Password">
+                                <button type="button" onclick="togglePassword('confirm_password', 'icon-confirm')" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 focus:outline-none">
+                                    <i class="fa-solid fa-eye" id="icon-confirm"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -123,6 +129,20 @@
 <script>
     let toastTimer = null;
     let otpRequested = false;
+
+    function togglePassword(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
 
     async function requestOTP() {
         const email = document.getElementById('email').value;
