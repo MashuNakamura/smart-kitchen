@@ -75,7 +75,12 @@
                 </div>
 
                 <div class="flex items-center gap-4 border-l pl-4 ml-2 border-gray-200">
-                    <a href="/profile" id="nav-username" class="text-sm font-bold text-gray-800 hover:text-orange-600 transition">{{ session.get('username', 'User') }}</a>
+                    <a href="/profile" class="flex items-center gap-2 group" title="Pengaturan Profil">
+                        <span id="nav-username" class="text-sm font-bold text-gray-800 group-hover:text-orange-600 transition">{{ session.get('username', 'User') }}</span>
+                        <div class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 group-hover:bg-orange-500 group-hover:text-white transition-all duration-300">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                    </a>
                     <button onclick="confirmLogout()" class="text-gray-400 hover:text-red-500 transition" title="Keluar">
                         <i class="fa-solid fa-right-from-bracket text-xl"></i>
                     </button>
@@ -194,11 +199,44 @@
 <script>
     // Database Bahan (Static)
     const INGREDIENTS_DB = [
-        "Ayam", "Sapi", "Telur", "Tahu", "Tempe", "Ikan", "Udang", "Cumi",
-        "Bawang Merah", "Bawang Putih", "Cabai", "Tomat", "Wortel", "Kentang",
-        "Bayam", "Kangkung", "Kol", "Brokoli", "Jagung", "Buncis", "Terong",
-        "Kecap Manis", "Saus Tiram", "Santan", "Tepung Terigu", "Tepung Beras",
-        "Mie", "Nasi", "Garam", "Gula", "Merica", "Jahe", "Kunyit", "Lengkuas"
+        // --- PROTEIN (Hewani & Nabati) ---
+        "Ayam", "Sapi", "Kambing", "Telur Ayam", "Telur Puyuh", "Telur Asin",
+        "Tahu", "Tempe", "Oncom",
+        "Ikan", "Ikan Asin", "Teri", "Udang", "Cumi", "Kerang",
+        "Bakso", "Sosis", "Kornet", "Sarden (Kaleng)", "Nugget",
+        "Ceker", "Ati Ampela", "Kikil", "Tetelan",
+
+        // --- SAYURAN & LALAPAN ---
+        "Bawang Merah", "Bawang Putih", "Bawang Bombay",
+        "Cabai Merah", "Cabai Hijau", "Cabai Rawit",
+        "Tomat", "Wortel", "Kentang", "Ubi", "Singkong",
+        "Bayam", "Kangkung", "Sawi Hijau", "Sawi Putih", "Pakcoy",
+        "Kol/Kubis", "Brokoli", "Kembang Kol",
+        "Buncis", "Kacang Panjang", "Terong", "Labu Siam", "Oyong/Gambas",
+        "Tauge", "Jamur Tiram", "Jamur Kancing", "Jamur Kuping",
+        "Jagung Manis", "Jagung Semi (Putren)",
+        "Daun Singkong", "Daun Pepaya", "Nangka Muda",
+        "Pare", "Petai", "Jengkol", "Timun", "Selada",
+
+        // --- KARBO & PELENGKAP ---
+        "Nasi", "Mie Instan", "Mie Telur", "Bihun/Soun", "Kwetiau",
+        "Makaroni", "Spaghetti",
+        "Roti Tawar", "Tepung Terigu", "Tepung Beras", "Tepung Tapioka/Kanji", "Tepung Maizena",
+        "Kerupuk Mentah", "Kulit Pangsit/Lumpia",
+
+        // --- BUMBU DASAR & REMPAH ---
+        "Garam", "Gula Pasir", "Gula Merah", "Kaldu Bubuk", "Lada/Merica", "Ketumbar",
+        "Jahe", "Kunyit", "Lengkuas", "Kencur", "Temu Kunci",
+        "Sereh", "Daun Salam", "Daun Jeruk", "Daun Kunyit", "Pandan",
+        "Kemiri", "Jinten", "Pala", "Cengkeh", "Kayu Manis", "Asam Jawa",
+        "Terasi", "Ebi",
+
+        // --- SAUS & CAIRAN ---
+        "Minyak Goreng", "Mentega/Margarin", "Santan",
+        "Kecap Manis", "Kecap Asin", "Kecap Ikan", "Kecap Inggris",
+        "Saus Tiram", "Saus Sambal", "Saus Tomat", "Saus Raja Rasa",
+        "Minyak Wijen", "Minyak Zaitun", "Mayones",
+        "Jeruk Nipis", "Jeruk Limau"
     ];
 
     const state = { selected: new Set(), lastRecipeId: null, modelServerUrl: "{{ model_server_url }}" };

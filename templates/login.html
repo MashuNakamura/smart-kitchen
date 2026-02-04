@@ -53,7 +53,10 @@
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
                                     <i class="fa-solid fa-lock"></i>
                                 </span>
-                            <input type="password" name="password" class="w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition bg-gray-50 focus:bg-white" placeholder="••••••••" required>
+                            <input type="password" id="passwordInput" name="password" class="w-full pl-10 pr-10 py-3 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition bg-gray-50 focus:bg-white" placeholder="••••••••" required>
+                            <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 focus:outline-none">
+                                <i class="fa-solid fa-eye" id="eyeIcon"></i>
+                            </button>
                         </div>
                         <div class="text-right mt-2">
                             <a href="/forgot-password" class="text-xs text-orange-600 hover:text-orange-700 hover:underline">Lupa Password?</a>
@@ -82,6 +85,21 @@
 
 <script>
     let toastTimer = null;
+
+    function togglePassword() {
+        const passwordInput = document.getElementById('passwordInput');
+        const eyeIcon = document.getElementById('eyeIcon');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            eyeIcon.classList.remove('fa-eye');
+            eyeIcon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            eyeIcon.classList.remove('fa-eye-slash');
+            eyeIcon.classList.add('fa-eye');
+        }
+    }
 
     async function handleLogin(e) {
         e.preventDefault();
