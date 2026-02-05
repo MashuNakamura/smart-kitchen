@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,467 +11,548 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
         .typing-loader::after {
             content: "Menunggu Chef...";
             animation: dots 1.5s steps(5, end) infinite;
         }
+
         @keyframes dots {
-            0%, 20% { content: "Meracik bumbu..."; }
-            40% { content: "Memanaskan wajan..."; }
-            60% { content: "Menulis resep..."; }
-            80%, 100% { content: "Menghidangkan..."; }
+
+            0%,
+            20% {
+                content: "Meracik bumbu...";
+            }
+
+            40% {
+                content: "Memanaskan wajan...";
+            }
+
+            60% {
+                content: "Menulis resep...";
+            }
+
+            80%,
+            100% {
+                content: "Menghidangkan...";
+            }
         }
+
         /* Animasi Scale In untuk Modal */
         @keyframes scaleIn {
-            from { transform: scale(0.95); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-        .animate-scaleIn { animation: scaleIn 0.2s ease-out; }
+            from {
+                transform: scale(0.95);
+                opacity: 0;
+            }
 
-        .custom-scroll::-webkit-scrollbar { width: 6px; }
-        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .animate-scaleIn {
+            animation: scaleIn 0.2s ease-out;
+        }
+
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
     </style>
 </head>
+
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
 
-<div id="logout-modal" class="fixed inset-0 z-[100] hidden">
-    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeLogoutModal()"></div>
-    <div class="absolute inset-0 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-scaleIn">
-            <div class="p-6 text-center">
-                <div class="mx-auto mb-4 w-14 h-14 flex items-center justify-center rounded-full bg-red-100">
-                    <i class="fa-solid fa-right-from-bracket text-red-500 text-2xl"></i>
-                </div>
-                <h3 class="text-lg font-bold text-gray-800 mb-2">Ingin Keluar?</h3>
-                <p class="text-sm text-gray-500 mb-6">
-                    Anda harus masuk kembali untuk mengakses Dapur AI. Apakah Anda yakin?
-                </p>
-                <div class="flex gap-3">
-                    <button onclick="closeLogoutModal()" class="flex-1 py-2.5 rounded-lg border border-gray-300 text-gray-600 font-medium hover:bg-gray-100 transition">Batal</button>
-                    <button onclick="performLogout()" class="flex-1 py-2.5 rounded-lg bg-red-500 text-white font-bold hover:bg-red-600 transition">Ya, Keluar</button>
+    <div id="logout-modal" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeLogoutModal()"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-scaleIn">
+                <div class="p-6 text-center">
+                    <div class="mx-auto mb-4 w-14 h-14 flex items-center justify-center rounded-full bg-red-100">
+                        <i class="fa-solid fa-right-from-bracket text-red-500 text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">Ingin Keluar?</h3>
+                    <p class="text-sm text-gray-500 mb-6">
+                        Anda harus masuk kembali untuk mengakses Dapur AI. Apakah Anda yakin?
+                    </p>
+                    <div class="flex gap-3">
+                        <button onclick="closeLogoutModal()"
+                            class="flex-1 py-2.5 rounded-lg border border-gray-300 text-gray-600 font-medium hover:bg-gray-100 transition">Batal</button>
+                        <button onclick="performLogout()"
+                            class="flex-1 py-2.5 rounded-lg bg-red-500 text-white font-bold hover:bg-red-600 transition">Ya,
+                            Keluar</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<nav class="bg-white shadow-sm sticky top-0 z-50">
-    <div class="container mx-auto px-4">
-        <div class="flex justify-between items-center py-3">
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-3">
 
-            <a href="/" class="flex items-center gap-2">
-                <i class="fa-solid fa-kitchen-set text-orange-500 text-2xl"></i>
-                <span class="text-xl font-bold tracking-tight text-gray-800">Smart<span class="text-orange-500">Kitchen</span></span>
-            </a>
+                <a href="/" class="flex items-center gap-2">
+                    <i class="fa-solid fa-kitchen-set text-orange-500 text-2xl"></i>
+                    <span class="text-xl font-bold tracking-tight text-gray-800">Smart<span
+                            class="text-orange-500">Kitchen</span></span>
+                </a>
 
-            <div class="hidden md:flex items-center gap-6">
-                <a href="/dashboard" class="text-sm font-bold text-orange-600 border-b-2 border-orange-500 pb-0.5">Dapur AI</a>
-                <a href="/history" class="text-sm font-medium text-gray-500 hover:text-orange-500 transition">Riwayat</a>
+                <div class="hidden md:flex items-center gap-6">
+                    <a href="/dashboard"
+                        class="text-sm font-bold text-orange-600 border-b-2 border-orange-500 pb-0.5">Dapur AI</a>
+                    <a href="/history"
+                        class="text-sm font-medium text-gray-500 hover:text-orange-500 transition">Riwayat</a>
 
-                <div class="flex items-center gap-2 text-xs">
-                    <div id="server-status-indicator" class="w-2 h-2 rounded-full bg-gray-400"></div>
-                    <span id="server-status-text" class="text-gray-500">Checking...</span>
+                    <div class="flex items-center gap-2 text-xs">
+                        <div id="server-status-indicator" class="w-2 h-2 rounded-full bg-gray-400"></div>
+                        <span id="server-status-text" class="text-gray-500">Checking...</span>
+                    </div>
+
+                    <div class="flex items-center gap-4 border-l pl-4 ml-2 border-gray-200">
+                        <a href="/profile" class="flex items-center gap-2 group" title="Pengaturan Profil">
+                            <span id="nav-username"
+                                class="text-sm font-bold text-gray-800 group-hover:text-orange-600 transition">{{
+                                session.get('username', 'User') }}</span>
+                            <div
+                                class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 group-hover:bg-orange-500 group-hover:text-white transition-all duration-300">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                        </a>
+                        <button onclick="confirmLogout()" class="text-gray-400 hover:text-red-500 transition"
+                            title="Keluar">
+                            <i class="fa-solid fa-right-from-bracket text-xl"></i>
+                        </button>
+                    </div>
                 </div>
 
-                <div class="flex items-center gap-4 border-l pl-4 ml-2 border-gray-200">
-                    <a href="/profile" class="flex items-center gap-2 group" title="Pengaturan Profil">
-                        <span id="nav-username" class="text-sm font-bold text-gray-800 group-hover:text-orange-600 transition">{{ session.get('username', 'User') }}</span>
-                        <div class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 group-hover:bg-orange-500 group-hover:text-white transition-all duration-300">
-                            <i class="fa-solid fa-user"></i>
-                        </div>
-                    </a>
-                    <button onclick="confirmLogout()" class="text-gray-400 hover:text-red-500 transition" title="Keluar">
-                        <i class="fa-solid fa-right-from-bracket text-xl"></i>
+                <button onclick="toggleMobileMenu()"
+                    class="md:hidden text-gray-500 hover:text-orange-500 focus:outline-none">
+                    <i class="fa-solid fa-bars text-2xl"></i>
+                </button>
+            </div>
+
+            <div id="mobile-menu" class="hidden md:hidden border-t border-gray-100 py-4 space-y-3 bg-white">
+                <a href="/dashboard" class="block px-2 text-sm font-bold text-orange-600">Dapur AI</a>
+                <a href="/history" class="block px-2 text-sm font-medium text-gray-600 hover:text-orange-500">Riwayat
+                    Masakan</a>
+                <a href="/profile" class="block px-2 text-sm font-medium text-gray-600 hover:text-orange-500">Pengaturan
+                    Profil</a>
+                <div class="border-t border-gray-100 pt-3 flex justify-between items-center px-2">
+                    <span id="nav-username-mobile" class="text-sm font-bold text-gray-800">{{ session.get('username',
+                        'User') }}</span>
+                    <button onclick="confirmLogout()" class="text-sm text-red-500 font-medium flex items-center gap-2">
+                        Keluar <i class="fa-solid fa-right-from-bracket"></i>
                     </button>
                 </div>
             </div>
-
-            <button onclick="toggleMobileMenu()" class="md:hidden text-gray-500 hover:text-orange-500 focus:outline-none">
-                <i class="fa-solid fa-bars text-2xl"></i>
-            </button>
         </div>
+    </nav>
 
-        <div id="mobile-menu" class="hidden md:hidden border-t border-gray-100 py-4 space-y-3 bg-white">
-            <a href="/dashboard" class="block px-2 text-sm font-bold text-orange-600">Dapur AI</a>
-            <a href="/history" class="block px-2 text-sm font-medium text-gray-600 hover:text-orange-500">Riwayat Masakan</a>
-            <a href="/profile" class="block px-2 text-sm font-medium text-gray-600 hover:text-orange-500">Pengaturan Profil</a>
-            <div class="border-t border-gray-100 pt-3 flex justify-between items-center px-2">
-                <span id="nav-username-mobile" class="text-sm font-bold text-gray-800">{{ session.get('username', 'User') }}</span>
-                <button onclick="confirmLogout()" class="text-sm text-red-500 font-medium flex items-center gap-2">
-                    Keluar <i class="fa-solid fa-right-from-bracket"></i>
-                </button>
+    <main class="flex-grow container mx-auto px-4 py-6 max-w-3xl">
+
+        <div id="toast"
+            class="fixed top-20 right-5 z-50 transform translate-x-full transition-transform duration-300 pointer-events-none">
+            <div id="toast-content"
+                class="px-6 py-4 rounded-lg shadow-xl text-white font-medium flex items-center gap-3 pointer-events-auto">
             </div>
         </div>
-    </div>
-</nav>
 
-<main class="flex-grow container mx-auto px-4 py-6 max-w-3xl">
+        <section class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 mb-8 transition-all duration-300">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2 text-gray-800">
+                <i class="fa-solid fa-basket-shopping text-orange-500"></i> Pilih Bahan
+            </h3>
 
-    <div id="toast" class="fixed top-20 right-5 z-50 transform translate-x-full transition-transform duration-300 pointer-events-none">
-        <div id="toast-content" class="px-6 py-4 rounded-lg shadow-xl text-white font-medium flex items-center gap-3 pointer-events-auto"></div>
-    </div>
-
-    <section class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 mb-8 transition-all duration-300">
-        <h3 class="text-lg font-bold mb-4 flex items-center gap-2 text-gray-800">
-            <i class="fa-solid fa-basket-shopping text-orange-500"></i> Pilih Bahan
-        </h3>
-
-        <div class="relative mb-4">
-            <input type="text" id="search-input" onkeyup="filterIngredients()"
-                   class="w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none text-sm bg-gray-50 transition focus:bg-white"
-                   placeholder="Cari bahan (ex: Telur)...">
-            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3.5 text-gray-400"></i>
-        </div>
-
-        <div id="ingredient-pool" class="max-h-[180px] overflow-y-auto custom-scroll p-2 border rounded-xl bg-white mb-4 min-h-[100px] flex flex-wrap content-start">
-        </div>
-
-        <div class="flex justify-between items-center mb-2">
-            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Keranjang Masak</span>
-            <button onclick="clearSelection()" class="text-red-500 hover:text-red-700 text-xs font-medium bg-red-50 px-2 py-1 rounded hover:bg-red-100 transition">Reset</button>
-        </div>
-        <div id="selected-pool" class="min-h-[50px] bg-orange-50/50 rounded-xl p-3 flex flex-wrap gap-2 border border-orange-100 mb-6 transition-all">
-            <span id="placeholder-text" class="text-gray-400 text-sm italic w-full text-center self-center py-2">Belum ada bahan dipilih...</span>
-        </div>
-
-        <input type="hidden" id="final-ingredients">
-
-        <div class="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
-            <div class="flex gap-1 bg-gray-100 p-1 rounded-xl w-full sm:w-auto shrink-0">
-                <label class="cursor-pointer flex-1 sm:flex-none">
-                    <input type="radio" name="mode" value="normal" checked class="peer hidden">
-                    <div class="px-6 py-2.5 text-center rounded-lg text-sm font-bold text-gray-500 peer-checked:bg-white peer-checked:text-orange-600 peer-checked:shadow-sm transition select-none">Normal</div>
-                </label>
-                <label class="cursor-pointer flex-1 sm:flex-none">
-                    <input type="radio" name="mode" value="diet" class="peer hidden">
-                    <div class="px-6 py-2.5 text-center rounded-lg text-sm font-bold text-gray-500 peer-checked:bg-white peer-checked:text-green-600 peer-checked:shadow-sm transition select-none">Diet</div>
-                </label>
+            <div class="relative mb-4">
+                <input type="text" id="search-input" onkeyup="filterIngredients()"
+                    class="w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none text-sm bg-gray-50 transition focus:bg-white"
+                    placeholder="Cari bahan (ex: Telur)...">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-3.5 text-gray-400"></i>
             </div>
 
-            <button onclick="generateRecipe()" id="btn-generate"
+            <div id="ingredient-pool"
+                class="max-h-[180px] overflow-y-auto custom-scroll p-2 border rounded-xl bg-white mb-4 min-h-[100px] flex flex-wrap content-start">
+            </div>
+
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Keranjang Masak</span>
+                <button onclick="clearSelection()"
+                    class="text-red-500 hover:text-red-700 text-xs font-medium bg-red-50 px-2 py-1 rounded hover:bg-red-100 transition">Reset</button>
+            </div>
+            <div id="selected-pool"
+                class="min-h-[50px] bg-orange-50/50 rounded-xl p-3 flex flex-wrap gap-2 border border-orange-100 mb-6 transition-all">
+                <span id="placeholder-text"
+                    class="text-gray-400 text-sm italic w-full text-center self-center py-2">Belum ada bahan
+                    dipilih...</span>
+            </div>
+
+            <input type="hidden" id="final-ingredients">
+
+            <div class="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
+                <div class="flex gap-1 bg-gray-100 p-1 rounded-xl w-full sm:w-auto shrink-0">
+                    <label class="cursor-pointer flex-1 sm:flex-none">
+                        <input type="radio" name="mode" value="normal" checked class="peer hidden">
+                        <div
+                            class="px-6 py-2.5 text-center rounded-lg text-sm font-bold text-gray-500 peer-checked:bg-white peer-checked:text-orange-600 peer-checked:shadow-sm transition select-none">
+                            Normal</div>
+                    </label>
+                    <label class="cursor-pointer flex-1 sm:flex-none">
+                        <input type="radio" name="mode" value="diet" class="peer hidden">
+                        <div
+                            class="px-6 py-2.5 text-center rounded-lg text-sm font-bold text-gray-500 peer-checked:bg-white peer-checked:text-green-600 peer-checked:shadow-sm transition select-none">
+                            Diet</div>
+                    </label>
+                </div>
+
+                <button onclick="generateRecipe()" id="btn-generate"
                     class="w-full sm:flex-1 py-3 bg-gray-900 text-white font-bold rounded-xl shadow-lg hover:bg-gray-800 transition-all transform active:scale-95 flex justify-center items-center gap-2 group">
-                <i class="fa-solid fa-wand-magic-sparkles text-orange-400 group-hover:rotate-12 transition"></i>
-                <span>Buat Resep</span>
-            </button>
-        </div>
-    </section>
-
-    <section id="output-section" class="hidden animate-scaleIn">
-
-        <div id="state-loading" class="hidden bg-white p-10 rounded-2xl shadow-lg border border-gray-100 text-center mb-10">
-            <div class="relative w-16 h-16 mx-auto mb-4">
-                <div class="absolute inset-0 border-4 border-gray-100 rounded-full"></div>
-                <div class="absolute inset-0 border-4 border-orange-500 rounded-full border-t-transparent animate-spin"></div>
-            </div>
-            <h3 class="text-lg font-bold text-gray-800 mb-2">Chef Sedang Memasak...</h3>
-            <p class="text-gray-500 text-sm typing-loader">Mohon tunggu sebentar</p>
-        </div>
-
-        <div id="state-result" class="hidden bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-10">
-            <div class="bg-gradient-to-r from-orange-50 to-white px-6 py-4 border-b border-orange-100 flex justify-between items-center sticky top-0 bg-white/80 backdrop-blur-sm z-10">
-                <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
-                    <i class="fa-solid fa-scroll text-orange-500"></i> Hasil Resep
-                </h2>
-                <button onclick="toggleFavorite()" id="btn-fav" class="h-10 w-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition shadow-sm">
-                    <i class="fa-regular fa-heart text-xl transition"></i>
+                    <i class="fa-solid fa-wand-magic-sparkles text-orange-400 group-hover:rotate-12 transition"></i>
+                    <span>Buat Resep</span>
                 </button>
             </div>
+        </section>
 
-            <div class="p-8 prose prose-orange max-w-none text-gray-700 leading-relaxed text-sm md:text-base" id="recipe-content">
+        <section id="output-section" class="hidden animate-scaleIn">
+
+            <div id="state-loading"
+                class="hidden bg-white p-10 rounded-2xl shadow-lg border border-gray-100 text-center mb-10">
+                <div class="relative w-16 h-16 mx-auto mb-4">
+                    <div class="absolute inset-0 border-4 border-gray-100 rounded-full"></div>
+                    <div
+                        class="absolute inset-0 border-4 border-orange-500 rounded-full border-t-transparent animate-spin">
+                    </div>
+                </div>
+                <h3 class="text-lg font-bold text-gray-800 mb-2">Chef Sedang Memasak...</h3>
+                <p class="text-gray-500 text-sm typing-loader">Mohon tunggu sebentar</p>
             </div>
+
+            <div id="state-result"
+                class="hidden bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-10">
+                <div
+                    class="bg-gradient-to-r from-orange-50 to-white px-6 py-4 border-b border-orange-100 flex justify-between items-center sticky top-0 bg-white/80 backdrop-blur-sm z-10">
+                    <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                        <i class="fa-solid fa-scroll text-orange-500"></i> Hasil Resep
+                    </h2>
+                    <button onclick="toggleFavorite()" id="btn-fav"
+                        class="h-10 w-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition shadow-sm">
+                        <i class="fa-regular fa-heart text-xl transition"></i>
+                    </button>
+                </div>
+
+                <div class="p-8 prose prose-orange max-w-none text-gray-700 leading-relaxed text-sm md:text-base"
+                    id="recipe-content">
+                </div>
+            </div>
+        </section>
+
+        <div id="state-placeholder" class="text-center py-12 text-gray-300">
+            <div class="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fa-solid fa-utensils text-4xl text-gray-400"></i>
+            </div>
+            <p class="text-sm font-medium">Resep masakan akan muncul di sini</p>
         </div>
-    </section>
 
-    <div id="state-placeholder" class="text-center py-12 text-gray-300">
-        <div class="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <i class="fa-solid fa-utensils text-4xl text-gray-400"></i>
-        </div>
-        <p class="text-sm font-medium">Resep masakan akan muncul di sini</p>
-    </div>
+    </main>
 
-</main>
+    <footer class="bg-white border-t py-6 text-center text-gray-400 text-xs mt-auto">
+        <p>&copy; 2026 SmartKitchen AI</p>
+    </footer>
 
-<footer class="bg-white border-t py-6 text-center text-gray-400 text-xs mt-auto">
-    <p>&copy; 2026 SmartKitchen AI</p>
-</footer>
+    <script>
+        // Database Bahan (Static)
+        // const INGREDIENTS_DB = [
+        //     // --- PROTEIN (Hewani & Nabati) ---
+        //     "Ayam", "Sapi", "Kambing", "Telur Ayam", "Telur Puyuh", "Telur Asin",
+        //     "Tahu", "Tempe", "Oncom",
+        //     "Ikan", "Ikan Asin", "Teri", "Udang", "Cumi", "Kerang",
+        //     "Bakso", "Sosis", "Kornet", "Sarden (Kaleng)", "Nugget",
+        //     "Ceker", "Ati Ampela", "Kikil", "Tetelan",
 
-<script>
-    // Database Bahan (Static)
-    const INGREDIENTS_DB = [
-        // --- PROTEIN (Hewani & Nabati) ---
-        "Ayam", "Sapi", "Kambing", "Telur Ayam", "Telur Puyuh", "Telur Asin",
-        "Tahu", "Tempe", "Oncom",
-        "Ikan", "Ikan Asin", "Teri", "Udang", "Cumi", "Kerang",
-        "Bakso", "Sosis", "Kornet", "Sarden (Kaleng)", "Nugget",
-        "Ceker", "Ati Ampela", "Kikil", "Tetelan",
+        //     // --- SAYURAN & LALAPAN ---
+        //     "Bawang Merah", "Bawang Putih", "Bawang Bombay",
+        //     "Cabai Merah", "Cabai Hijau", "Cabai Rawit",
+        //     "Tomat", "Wortel", "Kentang", "Ubi", "Singkong",
+        //     "Bayam", "Kangkung", "Sawi Hijau", "Sawi Putih", "Pakcoy",
+        //     "Kol/Kubis", "Brokoli", "Kembang Kol",
+        //     "Buncis", "Kacang Panjang", "Terong", "Labu Siam", "Oyong/Gambas",
+        //     "Tauge", "Jamur Tiram", "Jamur Kancing", "Jamur Kuping",
+        //     "Jagung Manis", "Jagung Semi (Putren)",
+        //     "Daun Singkong", "Daun Pepaya", "Nangka Muda",
+        //     "Pare", "Petai", "Jengkol", "Timun", "Selada",
 
-        // --- SAYURAN & LALAPAN ---
-        "Bawang Merah", "Bawang Putih", "Bawang Bombay",
-        "Cabai Merah", "Cabai Hijau", "Cabai Rawit",
-        "Tomat", "Wortel", "Kentang", "Ubi", "Singkong",
-        "Bayam", "Kangkung", "Sawi Hijau", "Sawi Putih", "Pakcoy",
-        "Kol/Kubis", "Brokoli", "Kembang Kol",
-        "Buncis", "Kacang Panjang", "Terong", "Labu Siam", "Oyong/Gambas",
-        "Tauge", "Jamur Tiram", "Jamur Kancing", "Jamur Kuping",
-        "Jagung Manis", "Jagung Semi (Putren)",
-        "Daun Singkong", "Daun Pepaya", "Nangka Muda",
-        "Pare", "Petai", "Jengkol", "Timun", "Selada",
+        //     // --- KARBO & PELENGKAP ---
+        //     "Nasi", "Mie Instan", "Mie Telur", "Bihun/Soun", "Kwetiau",
+        //     "Makaroni", "Spaghetti",
+        //     "Roti Tawar", "Tepung Terigu", "Tepung Beras", "Tepung Tapioka/Kanji", "Tepung Maizena",
+        //     "Kerupuk Mentah", "Kulit Pangsit/Lumpia",
 
-        // --- KARBO & PELENGKAP ---
-        "Nasi", "Mie Instan", "Mie Telur", "Bihun/Soun", "Kwetiau",
-        "Makaroni", "Spaghetti",
-        "Roti Tawar", "Tepung Terigu", "Tepung Beras", "Tepung Tapioka/Kanji", "Tepung Maizena",
-        "Kerupuk Mentah", "Kulit Pangsit/Lumpia",
+        //     // --- BUMBU DASAR & REMPAH ---
+        //     "Garam", "Gula Pasir", "Gula Merah", "Kaldu Bubuk", "Lada/Merica", "Ketumbar",
+        //     "Jahe", "Kunyit", "Lengkuas", "Kencur", "Temu Kunci",
+        //     "Sereh", "Daun Salam", "Daun Jeruk", "Daun Kunyit", "Pandan",
+        //     "Kemiri", "Jinten", "Pala", "Cengkeh", "Kayu Manis", "Asam Jawa",
+        //     "Terasi", "Ebi",
 
-        // --- BUMBU DASAR & REMPAH ---
-        "Garam", "Gula Pasir", "Gula Merah", "Kaldu Bubuk", "Lada/Merica", "Ketumbar",
-        "Jahe", "Kunyit", "Lengkuas", "Kencur", "Temu Kunci",
-        "Sereh", "Daun Salam", "Daun Jeruk", "Daun Kunyit", "Pandan",
-        "Kemiri", "Jinten", "Pala", "Cengkeh", "Kayu Manis", "Asam Jawa",
-        "Terasi", "Ebi",
+        //     // --- SAUS & CAIRAN ---
+        //     "Minyak Goreng", "Mentega/Margarin", "Santan",
+        //     "Kecap Manis", "Kecap Asin", "Kecap Ikan", "Kecap Inggris",
+        //     "Saus Tiram", "Saus Sambal", "Saus Tomat", "Saus Raja Rasa",
+        //     "Minyak Wijen", "Minyak Zaitun", "Mayones",
+        //     "Jeruk Nipis", "Jeruk Limau"
+        // ];
 
-        // --- SAUS & CAIRAN ---
-        "Minyak Goreng", "Mentega/Margarin", "Santan",
-        "Kecap Manis", "Kecap Asin", "Kecap Ikan", "Kecap Inggris",
-        "Saus Tiram", "Saus Sambal", "Saus Tomat", "Saus Raja Rasa",
-        "Minyak Wijen", "Minyak Zaitun", "Mayones",
-        "Jeruk Nipis", "Jeruk Limau"
-    ];
+        const INGREDIENTS_DB = [
+            "Ayam", "Sapi", "Telur", "Tahu", "Tempe", "Ikan", "Udang", "Cumi",
+            "Bawang Merah", "Bawang Putih", "Cabai", "Tomat", "Wortel", "Kentang",
+            "Bayam", "Kangkung", "Kol", "Brokoli", "Jagung", "Buncis", "Terong",
+            "Kecap Manis", "Saus Tiram", "Santan", "Tepung Terigu", "Tepung Beras",
+            "Mie", "Nasi", "Garam", "Gula", "Merica", "Jahe", "Kunyit", "Lengkuas"
+        ];
 
-    const state = { selected: new Set(), lastRecipeId: null, modelServerUrl: "{{ model_server_url }}" };
+        const state = { selected: new Set(), lastRecipeId: null, modelServerUrl: "{{ model_server_url }}" };
 
-    document.addEventListener('DOMContentLoaded', () => {
-        const user = sessionStorage.getItem('username');
-        if(user) {
-            document.getElementById('nav-username').innerText = user;
-            document.getElementById('nav-username-mobile').innerText = user;
-        }
-        renderIngredientPool();
-        checkServerStatus(); // Initial check
-        setInterval(checkServerStatus, 30000); // Poll every 30 seconds
-    });
-
-    // TODO: online indicator broken on mobile
-    async function checkServerStatus() {
-        const indicator = document.getElementById('server-status-indicator');
-        const statusText = document.getElementById('server-status-text');
-        const generateBtn = document.getElementById('btn-generate');
-
-        try {
-            const response = await fetch(`${state.modelServerUrl}/api/health`);
-            if (response.ok) {
-                indicator.classList.remove('bg-gray-400', 'bg-red-500');
-                indicator.classList.add('bg-green-500');
-                statusText.innerText = 'Chef is Ready';
-                statusText.classList.remove('text-gray-500');
-                statusText.classList.add('text-green-600');
-                generateBtn.disabled = false;
-                generateBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-            } else {
-                throw new Error('Server not ready');
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = sessionStorage.getItem('username');
+            if (user) {
+                document.getElementById('nav-username').innerText = user;
+                document.getElementById('nav-username-mobile').innerText = user;
             }
-        } catch (error) {
-            indicator.classList.remove('bg-gray-400', 'bg-green-500');
-            indicator.classList.add('bg-red-500');
-            statusText.innerText = 'Chef is Offline';
-            statusText.classList.remove('text-gray-500');
-            statusText.classList.add('text-red-600');
-            generateBtn.disabled = true;
-            generateBtn.classList.add('opacity-50', 'cursor-not-allowed');
-        }
-    }
-
-    // --- LOGOUT LOGIC (WITH MODAL) ---
-    function confirmLogout() {
-        document.getElementById('logout-modal').classList.remove('hidden');
-    }
-
-    function closeLogoutModal() {
-        document.getElementById('logout-modal').classList.add('hidden');
-    }
-
-    async function performLogout() {
-        await fetch('/api/logout');
-        sessionStorage.clear();
-        window.location.href = '/login';
-    }
-
-    // --- NAVBAR LOGIC ---
-    function toggleMobileMenu() {
-        const menu = document.getElementById('mobile-menu');
-        if (menu.classList.contains('hidden')) {
-            menu.classList.remove('hidden');
-        } else {
-            menu.classList.add('hidden');
-        }
-    }
-
-    // --- INGREDIENT LOGIC ---
-    function renderIngredientPool(filter = "") {
-        const pool = document.getElementById('ingredient-pool');
-        pool.innerHTML = "";
-        INGREDIENTS_DB.filter(i => i.toLowerCase().includes(filter.toLowerCase())).forEach(ing => {
-            const isSel = state.selected.has(ing);
-            const btn = document.createElement('button');
-            btn.className = isSel
-                ? "px-3 py-1.5 text-xs font-bold bg-orange-500 text-white rounded-lg transition shadow-md m-1 transform scale-105"
-                : "px-3 py-1.5 text-xs font-medium bg-gray-50 border border-gray-200 text-gray-600 rounded-lg hover:bg-white hover:border-orange-300 hover:text-orange-500 transition m-1";
-            btn.innerText = ing;
-            btn.onclick = () => toggleIngredient(ing);
-            pool.appendChild(btn);
+            renderIngredientPool();
+            checkServerStatus(); // Initial check
+            setInterval(checkServerStatus, 30000); // Poll every 30 seconds
         });
-    }
 
-    function filterIngredients() {
-        renderIngredientPool(document.getElementById('search-input').value);
-    }
+        // TODO: online indicator broken on mobile
+        async function checkServerStatus() {
+            const indicator = document.getElementById('server-status-indicator');
+            const statusText = document.getElementById('server-status-text');
+            const generateBtn = document.getElementById('btn-generate');
 
-    function toggleIngredient(ing) {
-        if (state.selected.has(ing)) state.selected.delete(ing);
-        else state.selected.add(ing);
-        updateUI();
-    }
+            try {
+                const response = await fetch(`${state.modelServerUrl}/api/health`);
+                if (response.ok) {
+                    indicator.classList.remove('bg-gray-400', 'bg-red-500');
+                    indicator.classList.add('bg-green-500');
+                    statusText.innerText = 'Chef is Ready';
+                    statusText.classList.remove('text-gray-500');
+                    statusText.classList.add('text-green-600');
+                    generateBtn.disabled = false;
+                    generateBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                } else {
+                    throw new Error('Server not ready');
+                }
+            } catch (error) {
+                indicator.classList.remove('bg-gray-400', 'bg-green-500');
+                indicator.classList.add('bg-red-500');
+                statusText.innerText = 'Chef is Offline';
+                statusText.classList.remove('text-gray-500');
+                statusText.classList.add('text-red-600');
+                generateBtn.disabled = true;
+                generateBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
 
-    function clearSelection() {
-        state.selected.clear();
-        updateUI();
-    }
+        // --- LOGOUT LOGIC (WITH MODAL) ---
+        function confirmLogout() {
+            document.getElementById('logout-modal').classList.remove('hidden');
+        }
 
-    function updateUI() {
-        const box = document.getElementById('selected-pool');
-        const ph = document.getElementById('placeholder-text');
-        const input = document.getElementById('final-ingredients');
+        function closeLogoutModal() {
+            document.getElementById('logout-modal').classList.add('hidden');
+        }
 
-        // Clear existing tags
-        Array.from(box.children).forEach(c => { if(c.id !== 'placeholder-text') box.removeChild(c) });
+        async function performLogout() {
+            await fetch('/api/logout');
+            sessionStorage.clear();
+            window.location.href = '/login';
+        }
 
-        if (state.selected.size === 0) ph.classList.remove('hidden');
-        else {
-            ph.classList.add('hidden');
-            state.selected.forEach(ing => {
-                const tag = document.createElement('div');
-                tag.className = "flex items-center gap-1 bg-white border border-orange-200 text-orange-700 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm animate-scaleIn";
-                tag.innerHTML = `${ing} <button onclick="toggleIngredient('${ing}')" class="text-orange-300 hover:text-red-500 ml-1 p-0.5 rounded-full hover:bg-red-50 transition"><i class="fa-solid fa-xmark"></i></button>`;
-                box.appendChild(tag);
+        // --- NAVBAR LOGIC ---
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+            } else {
+                menu.classList.add('hidden');
+            }
+        }
+
+        // --- INGREDIENT LOGIC ---
+        function renderIngredientPool(filter = "") {
+            const pool = document.getElementById('ingredient-pool');
+            pool.innerHTML = "";
+            INGREDIENTS_DB.filter(i => i.toLowerCase().includes(filter.toLowerCase())).forEach(ing => {
+                const isSel = state.selected.has(ing);
+                const btn = document.createElement('button');
+                btn.className = isSel
+                    ? "px-3 py-1.5 text-xs font-bold bg-orange-500 text-white rounded-lg transition shadow-md m-1 transform scale-105"
+                    : "px-3 py-1.5 text-xs font-medium bg-gray-50 border border-gray-200 text-gray-600 rounded-lg hover:bg-white hover:border-orange-300 hover:text-orange-500 transition m-1";
+                btn.innerText = ing;
+                btn.onclick = () => toggleIngredient(ing);
+                pool.appendChild(btn);
             });
         }
-        renderIngredientPool(document.getElementById('search-input').value);
-        input.value = Array.from(state.selected).join(", ");
-    }
 
-    // --- GENERATE RECIPE ---
-    async function generateRecipe() {
-        const bahan = document.getElementById('final-ingredients').value;
-        if (!bahan) return showToast("Pilih minimal satu bahan dulu ya!", "error");
-        const mode = document.querySelector('input[name="mode"]:checked').value;
+        function filterIngredients() {
+            renderIngredientPool(document.getElementById('search-input').value);
+        }
 
-        // Switch UI
-        document.getElementById('state-placeholder').classList.add('hidden');
-        document.getElementById('output-section').classList.remove('hidden');
-        document.getElementById('state-result').classList.add('hidden');
-        document.getElementById('state-loading').classList.remove('hidden');
+        function toggleIngredient(ing) {
+            if (state.selected.has(ing)) state.selected.delete(ing);
+            else state.selected.add(ing);
+            updateUI();
+        }
 
-        document.getElementById('btn-generate').disabled = true;
-        document.getElementById('btn-generate').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Memproses...';
-        document.getElementById('btn-generate').classList.add('opacity-75', 'cursor-not-allowed');
+        function clearSelection() {
+            state.selected.clear();
+            updateUI();
+        }
 
-        // Auto scroll smooth ke bawah
-        setTimeout(() => {
-            document.getElementById('output-section').scrollIntoView({behavior: 'smooth', block: 'start'});
-        }, 100);
+        function updateUI() {
+            const box = document.getElementById('selected-pool');
+            const ph = document.getElementById('placeholder-text');
+            const input = document.getElementById('final-ingredients');
 
-        try {
-            const res = await fetch('/api/generate', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ bahan, mode })
-            });
-            const json = await res.json();
+            // Clear existing tags
+            Array.from(box.children).forEach(c => { if (c.id !== 'placeholder-text') box.removeChild(c) });
 
-            if (res.ok && json.success) {
-                renderResult(json.data.resep);
-                state.lastRecipeId = json.data.history_id;
-                resetFavButton();
-                showToast("Resep berhasil dibuat!", "success");
-            } else {
-                showToast(json.message || "Gagal membuat resep.", "error");
+            if (state.selected.size === 0) ph.classList.remove('hidden');
+            else {
+                ph.classList.add('hidden');
+                state.selected.forEach(ing => {
+                    const tag = document.createElement('div');
+                    tag.className = "flex items-center gap-1 bg-white border border-orange-200 text-orange-700 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm animate-scaleIn";
+                    tag.innerHTML = `${ing} <button onclick="toggleIngredient('${ing}')" class="text-orange-300 hover:text-red-500 ml-1 p-0.5 rounded-full hover:bg-red-50 transition"><i class="fa-solid fa-xmark"></i></button>`;
+                    box.appendChild(tag);
+                });
+            }
+            renderIngredientPool(document.getElementById('search-input').value);
+            input.value = Array.from(state.selected).join(", ");
+        }
+
+        // --- GENERATE RECIPE ---
+        async function generateRecipe() {
+            const bahan = document.getElementById('final-ingredients').value;
+            if (!bahan) return showToast("Pilih minimal satu bahan dulu ya!", "error");
+            const mode = document.querySelector('input[name="mode"]:checked').value;
+
+            // Switch UI
+            document.getElementById('state-placeholder').classList.add('hidden');
+            document.getElementById('output-section').classList.remove('hidden');
+            document.getElementById('state-result').classList.add('hidden');
+            document.getElementById('state-loading').classList.remove('hidden');
+
+            document.getElementById('btn-generate').disabled = true;
+            document.getElementById('btn-generate').innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Memproses...';
+            document.getElementById('btn-generate').classList.add('opacity-75', 'cursor-not-allowed');
+
+            // Auto scroll smooth ke bawah
+            setTimeout(() => {
+                document.getElementById('output-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+
+            try {
+                const res = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ bahan, mode })
+                });
+                const json = await res.json();
+
+                if (res.ok && json.success) {
+                    renderResult(json.data.resep);
+                    state.lastRecipeId = json.data.history_id;
+                    resetFavButton();
+                    showToast("Resep berhasil dibuat!", "success");
+                } else {
+                    showToast(json.message || "Gagal membuat resep.", "error");
+                    document.getElementById('state-placeholder').classList.remove('hidden');
+                    document.getElementById('output-section').classList.add('hidden');
+                }
+            } catch (e) {
+                showToast("Koneksi Error.", "error");
                 document.getElementById('state-placeholder').classList.remove('hidden');
                 document.getElementById('output-section').classList.add('hidden');
+            } finally {
+                document.getElementById('state-loading').classList.add('hidden');
+
+                const btn = document.getElementById('btn-generate');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles text-orange-400 group-hover:rotate-12 transition"></i> <span>Buat Resep</span>';
+                btn.classList.remove('opacity-75', 'cursor-not-allowed');
             }
-        } catch (e) {
-            showToast("Koneksi Error.", "error");
-            document.getElementById('state-placeholder').classList.remove('hidden');
-            document.getElementById('output-section').classList.add('hidden');
-        } finally {
-            document.getElementById('state-loading').classList.add('hidden');
-
-            const btn = document.getElementById('btn-generate');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles text-orange-400 group-hover:rotate-12 transition"></i> <span>Buat Resep</span>';
-            btn.classList.remove('opacity-75', 'cursor-not-allowed');
         }
-    }
 
-    function renderResult(text) {
-        const box = document.getElementById('state-result');
-        const content = document.getElementById('recipe-content');
+        function renderResult(text) {
+            const box = document.getElementById('state-result');
+            const content = document.getElementById('recipe-content');
 
-        let html = text
-            .replace(/\n/g, '<br>')
-            .replace(/\*\*(.*?)\*\*/g, '<strong class="text-gray-900 text-lg">$1</strong>')
-            .replace(/- (.*?)(<br>|$)/g, '<div class="flex gap-2 mb-2 items-start"><span class="text-orange-500 mt-1.5 text-xs">●</span> <span class="flex-1">$1</span></div>');
+            let html = text
+                .replace(/\n/g, '<br>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong class="text-gray-900 text-lg">$1</strong>')
+                .replace(/- (.*?)(<br>|$)/g, '<div class="flex gap-2 mb-2 items-start"><span class="text-orange-500 mt-1.5 text-xs">●</span> <span class="flex-1">$1</span></div>');
 
-        content.innerHTML = html;
-        box.classList.remove('hidden');
-    }
+            content.innerHTML = html;
+            box.classList.remove('hidden');
+        }
 
-    async function toggleFavorite() {
-        if (!state.lastRecipeId) return;
-        const btn = document.getElementById('btn-fav');
-        const icon = btn.querySelector('i');
-        try {
-            const res = await fetch('/api/favorites', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ history_id: state.lastRecipeId })
-            });
-            const json = await res.json();
-            if (json.success) {
-                if (json.data.is_favorite) {
-                    icon.className = "fa-solid fa-heart text-xl text-red-500 transition transform scale-110";
-                    showToast("Disimpan ke Favorit ❤️", "success");
-                } else {
-                    icon.className = "fa-regular fa-heart text-xl transition";
-                    showToast("Dihapus dari Favorit", "info");
+        async function toggleFavorite() {
+            if (!state.lastRecipeId) return;
+            const btn = document.getElementById('btn-fav');
+            const icon = btn.querySelector('i');
+            try {
+                const res = await fetch('/api/favorites', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ history_id: state.lastRecipeId })
+                });
+                const json = await res.json();
+                if (json.success) {
+                    if (json.data.is_favorite) {
+                        icon.className = "fa-solid fa-heart text-xl text-red-500 transition transform scale-110";
+                        showToast("Disimpan ke Favorit ❤️", "success");
+                    } else {
+                        icon.className = "fa-regular fa-heart text-xl transition";
+                        showToast("Dihapus dari Favorit", "info");
+                    }
                 }
-            }
-        } catch (e) { showToast("Gagal update favorit", "error"); }
-    }
-
-    function resetFavButton() {
-        const icon = document.querySelector('#btn-fav i');
-        if(icon) icon.className = "fa-regular fa-heart text-xl transition";
-    }
-
-    // UX: Tutup modal kalau pencet ESC
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            closeLogoutModal();
+            } catch (e) { showToast("Gagal update favorit", "error"); }
         }
-    });
 
-    let toastTimeout;
-    function showToast(msg, type) {
-        const toast = document.getElementById('toast');
-        const content = document.getElementById('toast-content');
-        if (toastTimeout) clearTimeout(toastTimeout);
-        content.innerText = msg;
-        content.className = `px-6 py-4 rounded-lg shadow-xl text-white font-medium flex items-center gap-3 ${type === 'error' ? 'bg-red-500' : 'bg-green-500'}`;
-        toast.classList.remove('translate-x-full');
-        toastTimeout = setTimeout(() => toast.classList.add('translate-x-full'), 3000);
-    }
-</script>
+        function resetFavButton() {
+            const icon = document.querySelector('#btn-fav i');
+            if (icon) icon.className = "fa-regular fa-heart text-xl transition";
+        }
+
+        // UX: Tutup modal kalau pencet ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeLogoutModal();
+            }
+        });
+
+        let toastTimeout;
+        function showToast(msg, type) {
+            const toast = document.getElementById('toast');
+            const content = document.getElementById('toast-content');
+            if (toastTimeout) clearTimeout(toastTimeout);
+            content.innerText = msg;
+            content.className = `px-6 py-4 rounded-lg shadow-xl text-white font-medium flex items-center gap-3 ${type === 'error' ? 'bg-red-500' : 'bg-green-500'}`;
+            toast.classList.remove('translate-x-full');
+            toastTimeout = setTimeout(() => toast.classList.add('translate-x-full'), 3000);
+        }
+    </script>
 </body>
+
 </html>
