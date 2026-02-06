@@ -2,6 +2,7 @@
 # Library Imports
 # ==========================================
 import os
+import gc
 import re
 import random
 import string
@@ -64,10 +65,15 @@ def generate_resep_final(bahan_input, mode="normal"):
         response = requests.post(f"{model_server_url}/api/generate", json={"bahan": bahan_input, "mode": mode}, headers=headers)
         response.raise_for_status()  # Raise an exception for bad status codes
         data = response.json()
+
+        # Bersihkan sisa request Python sebelum return data
+        gc.collect()
+
         if data.get("success"):
             return data.get("data", {}).get("resep", "Maaf, terjadi kesalahan saat memproses resep.")
         else:
             return data.get("message", "Maaf, terjadi kesalahan saat memproses resep.")
+
     except requests.exceptions.RequestException as e:
         print(f"[ERR] Error calling model server: {e}")
         return "Maaf, dapur sedang kendala teknis."
